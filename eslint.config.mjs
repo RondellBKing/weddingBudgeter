@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Generated Prisma client and local database dumps.
     "src/generated/**",
     "backups/**",
+    // Parallel git worktrees used during development.
+    ".claude/**",
   ]),
 ]);
 

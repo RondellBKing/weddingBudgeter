@@ -6,7 +6,15 @@ import type { ReactNode } from "react";
 export const inputClass =
   "w-full rounded-[3px] border border-rule-strong bg-paper px-3 py-2.5 text-[15px] text-chocolate placeholder:text-muted/70 focus:border-desert-rose aria-[invalid=true]:border-brick";
 
-type Common = { name: string; label: string; hint?: string; error?: string; className?: string };
+type Common = {
+  name: string;
+  label: string;
+  hint?: string;
+  error?: string;
+  className?: string;
+  /** Makes ids unique when the same form appears more than once on a page. */
+  idPrefix?: string;
+};
 
 export function Field({
   id,
@@ -52,6 +60,7 @@ export function TextField({
   hint,
   error,
   className,
+  idPrefix = "",
   defaultValue,
   type = "text",
   placeholder,
@@ -66,7 +75,7 @@ export function TextField({
   inputMode?: "text" | "decimal" | "numeric" | "email" | "tel" | "url";
   autoComplete?: string;
 }) {
-  const id = `f-${name}`;
+  const id = `f-${idPrefix}${name}`;
   return (
     <Field id={id} label={label} hint={hint} error={error} className={className}>
       <input
@@ -88,7 +97,7 @@ export function TextField({
 
 /** Dollar amount. The server parses it into integer cents. */
 export function MoneyField(props: Common & { defaultValue?: string | null; placeholder?: string; required?: boolean }) {
-  const id = `f-${props.name}`;
+  const id = `f-${props.idPrefix ?? ""}${props.name}`;
   return (
     <Field id={id} label={props.label} hint={props.hint} error={props.error} className={props.className}>
       <div className="relative">
@@ -118,6 +127,7 @@ export function SelectField({
   hint,
   error,
   className,
+  idPrefix = "",
   defaultValue,
   options,
   placeholder,
@@ -128,7 +138,7 @@ export function SelectField({
   placeholder?: string;
   required?: boolean;
 }) {
-  const id = `f-${name}`;
+  const id = `f-${idPrefix}${name}`;
   return (
     <Field id={id} label={label} hint={hint} error={error} className={className}>
       <select
@@ -161,11 +171,12 @@ export function TextareaField({
   hint,
   error,
   className,
+  idPrefix = "",
   defaultValue,
   rows = 3,
   placeholder,
 }: Common & { defaultValue?: string | null; rows?: number; placeholder?: string }) {
-  const id = `f-${name}`;
+  const id = `f-${idPrefix}${name}`;
   return (
     <Field id={id} label={label} hint={hint} error={error} className={className}>
       <textarea
@@ -188,14 +199,16 @@ export function CheckboxField({
   hint,
   defaultChecked,
   className = "",
+  idPrefix = "",
 }: {
   name: string;
   label: string;
   hint?: string;
   defaultChecked?: boolean;
   className?: string;
+  idPrefix?: string;
 }) {
-  const id = `f-${name}`;
+  const id = `f-${idPrefix}${name}`;
   return (
     <div className={`flex items-start gap-3 ${className}`}>
       <input
