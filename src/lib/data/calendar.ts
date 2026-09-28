@@ -4,13 +4,12 @@ import { requireSession } from "../auth/require-session";
 import { formatInstant, fromDbDate, todayIn, type CalendarDate } from "../dates";
 import { prisma } from "../db";
 import { buildAgenda, paymentDetail } from "../domain/agenda";
-import { resolvePaymentAmount, type PaymentRow } from "../domain/budget";
+import { resolvePaymentAmount } from "../domain/budget";
 import { sortByTime } from "../domain/calendar-grid";
-import { overageCents, projectHeadcount } from "../domain/headcount";
 import { instantToZoned } from "../domain/zoned-time";
 import { buildIcs, feedEvents, tokensMatch, type FeedInput } from "../ics";
 import { EVENT_TYPE_LABEL, OWNER_LABEL } from "../labels";
-import { loadPlan } from "./plan";
+import { computePlan, loadPlan } from "./plan";
 
 // The calendar is a union of three sources merged at read time: appointments (CalendarEvent),
 // payment due dates (unpaid Payment rows) and task due dates. Nothing is copied.
@@ -178,62 +177,37 @@ export async function loadCalendarFeed(token: string, opts: { includeAmounts: bo
   const state = await prisma.authState.findUnique({ where: { id: 1 }, select: { icsToken: true } });
   if (!state || !tokensMatch(token, state.icsToken)) return null;
 
-  const s = await prisma.weddingSettings.findUnique({ where: { id: 1 } });
-  if (!s) return null;
+  // The same plan every page uses, so amounts in the feed never drift from the app.
+  let plan: Awaited<ReturnType<typeof computePlan>>;
+  try {
+    plan = await computePlan();
+  } catch {
+    return null;
+  }
+  const s = plan.settings;
+  const ctx = { headcountOverageCents: plan.headroom.overageCents };
 
-  const [items, tasks, events, guestsNotDeclined, anyGuests, vendorMeals] = await Promise.all([
-    prisma.budgetItem.findMany({ include: { payments: true, vendor: { select: { name: true } } }, orderBy: { createdAt: "asc" } }),
+  const [tasks, events] = await Promise.all([
     prisma.task.findMany({ where: { status: { not: "DONE" }, dueDate: { not: null } }, orderBy: [{ dueDate: "asc" }, { title: "asc" }] }),
     prisma.calendarEvent.findMany({ include: { vendor: { select: { name: true } } }, orderBy: [{ allDayDate: "asc" }, { startAt: "asc" }] }),
-    prisma.guest.count({ where: { OR: [{ rsvpStatus: null }, { rsvpStatus: { not: "DECLINED" } }] } }),
-    prisma.guest.count(),
-    prisma.vendor.aggregate({ where: { status: "BOOKED" }, _sum: { mealsRequired: true } }),
   ]);
-
-  const headcount = projectHeadcount({
-    guestsNotDeclined,
-    hasGuestList: anyGuests > 0,
-    headcountTarget: s.headcountTarget,
-    vendorMeals: vendorMeals._sum.mealsRequired ?? 0,
-    vendorMealsCountTowardHeadcount: s.vendorMealsCountTowardHeadcount,
-  });
-  const ctx = {
-    headcountOverageCents: overageCents(headcount.headcount, {
-      includedHeadcount: s.includedHeadcount,
-      perPersonOverageCents: s.perPersonOverageCents,
-      overageTaxPpm: s.overageTaxPpm,
-    }),
-  };
 
   const input: FeedInput = {
     couple: `${s.partnerOneName} & ${s.partnerTwoName}`,
-    weddingDate: fromDbDate(s.weddingDate),
+    weddingDate: s.weddingDate,
     ceremonyTime: s.ceremonyTime,
     venue: { name: s.venueName, address: s.venueAddress },
-    payments: items.flatMap((item) =>
+    payments: plan.items.flatMap((item) =>
       item.payments
         .filter((p) => p.paidDate === null)
-        .map((p) => {
-          const row: PaymentRow = {
-            id: p.id,
-            budgetItemId: p.budgetItemId,
-            sequence: p.sequence,
-            kind: p.kind,
-            amountCents: p.amountCents,
-            amountRule: p.amountRule,
-            isEstimate: p.isEstimate,
-            dueDate: fromDbDate(p.dueDate),
-            paidDate: null,
-          };
-          return {
-            id: p.id,
-            dueDate: row.dueDate,
-            title: item.vendor?.name ?? item.description,
-            detail: paymentDetail(p, item.payments.length),
-            amountCents: resolvePaymentAmount(row, ctx),
-            isEstimate: p.isEstimate || p.amountRule !== null,
-          };
-        }),
+        .map((p) => ({
+          id: p.id,
+          dueDate: p.dueDate,
+          title: item.vendorName ?? item.description,
+          detail: paymentDetail(p, item.payments.length),
+          amountCents: resolvePaymentAmount(p, ctx),
+          isEstimate: p.isEstimate || p.amountRule !== null,
+        })),
     ),
     tasks: tasks.map((t) => ({
       id: t.id,

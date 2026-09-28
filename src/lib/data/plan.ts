@@ -59,9 +59,11 @@ export class NotSeededError extends Error {
   }
 }
 
-export const loadPlan = cache(async (): Promise<Plan> => {
-  await requireSession();
-
+/**
+ * The whole plan, with no session check. Only for callers that authenticate some other way
+ * (the calendar feed checks its secret token). Pages and actions use loadPlan().
+ */
+export async function computePlan(): Promise<Plan> {
   const s = await prisma.weddingSettings.findUnique({ where: { id: 1 } });
   if (!s) throw new NotSeededError();
   const today = todayIn(s.timezone);
@@ -168,4 +170,10 @@ export const loadPlan = cache(async (): Promise<Plan> => {
     nextPayments: upcomingPayments(itemRows, ctx, today, 5),
     hasDemoData: demoCounts.some((n) => n > 0),
   };
+}
+
+/** The plan for the signed-in couple. Cached per request, so the layout and page share one load. */
+export const loadPlan = cache(async (): Promise<Plan> => {
+  await requireSession();
+  return computePlan();
 });
