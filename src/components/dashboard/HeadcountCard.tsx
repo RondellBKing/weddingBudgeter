@@ -57,10 +57,10 @@ export function HeadcountCard({
   const be = breakEvenHeadcount ?? includedHeadcount;
 
   return (
-    <div className="grid gap-5 border border-rule bg-paper p-5 sm:p-6">
+    <div className="grid gap-5">
       <div className="grid gap-3">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className={`num text-[56px] leading-none font-light tracking-tight sm:text-[64px] ${tone === "overdue" ? "text-brick" : ""}`}>
+          <span className={`num font-display text-[64px] leading-[0.9] sm:text-[72px] ${tone === "overdue" ? "text-brick" : ""}`}>
             {big}
           </span>
           <span className="font-display text-2xl leading-tight text-cocoa italic">{words}</span>

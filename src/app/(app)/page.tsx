@@ -1,182 +1,282 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { HeadcountCard } from "@/components/dashboard/HeadcountCard";
+import { Card, CardHeading } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
 import { Meter } from "@/components/ui/Meter";
-import { PageTitle, SectionTitle } from "@/components/ui/PageTitle";
-import { Stat, StatRow } from "@/components/ui/Stat";
+import { Divider, Sprig } from "@/components/ui/Ornaments";
+import { PageTitle } from "@/components/ui/PageTitle";
+import { Legend, Ring } from "@/components/ui/Ring";
 import { ToneBadge, toneText, type Tone } from "@/components/ui/Tone";
 import { loadDashboard } from "@/lib/data/dashboard";
-import { formatDate, relativeDays } from "@/lib/dates";
+import { daysBetween, formatDate, greetingFor, relativeDays, type DueState } from "@/lib/dates";
+import type { AgendaKind } from "@/lib/domain/agenda";
 import { formatCents, formatPercent } from "@/lib/money";
 
 export const metadata = { title: "Dashboard" };
 
-const PAYMENT_LABELS: Record<string, string> = {
-  DEPOSIT: "Deposit",
-  INSTALLMENT: "Installment",
-  FINAL: "Final payment",
-  OVERAGE: "Headcount overage",
-  SERVICE_CHARGE: "Service charge (mandatory)",
-  GRATUITY: "Tip",
-  OTHER: "Payment",
+const KIND: Record<AgendaKind, { label: string; dot: string }> = {
+  milestone: { label: "Milestone", dot: "bg-desert-rose" },
+  payment: { label: "Payment", dot: "bg-gold" },
+  event: { label: "Appointment", dot: "bg-garden" },
+  task: { label: "Task", dot: "border border-desert-rose bg-paper" },
 };
+
+function stateTone(state: DueState): Tone {
+  return state === "overdue" ? "overdue" : state === "due-soon" ? "due-soon" : "neutral";
+}
+
+function MoreLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink hover:text-chocolate">
+      {children}
+      <Icon name="arrow" size={14} />
+    </Link>
+  );
+}
 
 export default async function DashboardPage() {
   const d = await loadDashboard();
   const { plan } = d;
-  const { settings, budget, headroom, headcount } = plan;
-  const sizingTone: Tone = d.sizing.tone;
+  const { settings, budget, headroom, headcount, today } = plan;
+  const committedUnpaid = Math.max(0, budget.committed - budget.paid);
+  const next = plan.nextPayments[0];
+  const weeks = Math.floor(d.daysToGo / 7);
 
   return (
-    <div className="grid gap-12 sm:gap-14">
-      <div className="grid gap-4">
-        <PageTitle word="Dashboard" eyebrow={`${settings.partnerOneName} & ${settings.partnerTwoName}`} />
-        <p className="flex flex-col gap-x-4 gap-y-0.5 text-sm text-cocoa sm:flex-row sm:flex-wrap">
-          <span>{formatDate(settings.weddingDate, "weekday-long")}</span>
-          <span aria-hidden className="hidden text-desert-rose sm:inline">·</span>
-          <span>{settings.venueName}</span>
-          <span aria-hidden className="hidden text-desert-rose sm:inline">·</span>
-          <span>{settings.venueAddress}</span>
-        </p>
-        <p className="flex flex-wrap items-baseline gap-3">
-          <span className="num font-display text-[72px] leading-none sm:text-[88px]">
-            {d.daysToGo.toLocaleString("en-US")}
-          </span>
-          <span className="label-caps">days to go</span>
-        </p>
-      </div>
+    <div className="grid gap-8 sm:gap-10">
+      <PageTitle
+        word="Dashboard"
+        eyebrow={greetingFor(settings.timezone)}
+        intro={`${formatDate(today, "weekday-long")}. Here's where the wedding stands today.`}
+      />
 
-      <StatRow label="Budget summary">
-        <Stat label="Total budget" value={formatCents(budget.totalBudget)} sub={`${budget.categories.length} categories`} />
-        <Stat label="Committed" value={formatCents(budget.committed)} sub="under contract" />
-        <Stat label="Paid" value={formatCents(budget.paid)} sub={`${formatPercent(budget.paid, budget.totalBudget)} of budget`} />
-        <Stat label="Left to pay" value={formatCents(budget.leftToPay)} sub="on signed contracts" />
-        <Stat label="Uncommitted" value={formatCents(budget.uncommitted)} sub="not yet contracted" />
-      </StatRow>
-
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-12">
-        <section className="grid content-start gap-4" aria-labelledby="headcount-h">
-          <p id="headcount-h" className="label-caps">
-            Headcount vs. the venue&apos;s included {settings.includedHeadcount}
+      {/* The save-the-date */}
+      <Card framed as="section" aria-label="The wedding" className="overflow-hidden px-6 py-12 text-center sm:px-12 sm:py-14">
+        <Sprig className="pointer-events-none absolute -top-3 -left-8 w-44 opacity-90 sm:w-60" />
+        <Sprig flip="xy" className="pointer-events-none absolute -right-8 -bottom-3 w-44 opacity-90 sm:w-60" />
+        <div className="relative mx-auto grid max-w-2xl justify-items-center gap-5">
+          <p className="label-caps tracking-[0.28em] text-rose-ink">The wedding of</p>
+          <h2 className="text-[46px] leading-[0.95] sm:text-[76px]">
+            {settings.partnerOneName} <em className="text-rose-ink italic">&amp;</em> {settings.partnerTwoName}
+          </h2>
+          <Divider className="w-40 sm:w-56" />
+          <p className="text-[12px] font-medium tracking-[0.3em] text-cocoa uppercase">
+            {formatDate(settings.weddingDate, "weekday-long").replace(/, /g, " · ")}
           </p>
+          <p className="font-display text-xl text-balance text-cocoa italic sm:text-2xl">
+            {settings.venueName}, {settings.venueAddress.replace(/ (?=\S+,)/, "\u00a0")}
+          </p>
+
+          <dl className="mt-4 grid w-full max-w-md grid-cols-3 border-y border-rule">
+            {[
+              [d.daysToGo, "days"],
+              [weeks, "weeks"],
+              [d.untilWedding.months, "months"],
+            ].map(([n, label], i) => (
+              <div key={label} className={`grid gap-1 py-4 ${i > 0 ? "border-l border-rule" : ""}`}>
+                <dt className="sr-only">{label}</dt>
+                <dd className="num font-display text-4xl leading-none sm:text-5xl">{Number(n).toLocaleString("en-US")}</dd>
+                <dd className="label-caps text-[10px]">{label}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-sm text-muted">
+            {d.untilWedding.months} months and {d.untilWedding.days} days to go. Rehearsal dinner the evening before.
+          </p>
+        </div>
+      </Card>
+
+      {/* At a glance */}
+      <div className="grid gap-5 lg:grid-cols-12">
+        <Card className="grid gap-6 p-6 sm:p-7 lg:col-span-7" aria-labelledby="budget-h">
+          <CardHeading id="budget-h" title="Budget" action={<MoreLink href="/budget">Budget</MoreLink>} />
+          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+            <Ring
+              total={Math.max(budget.totalBudget, budget.committed)}
+              label={`Budget: ${formatCents(budget.paid)} paid, ${formatCents(committedUnpaid)} committed but not yet paid, ${formatCents(budget.uncommitted)} not yet committed.`}
+              segments={[
+                { label: "Paid", value: budget.paid, className: "stroke-desert-rose", display: formatCents(budget.paid) },
+                { label: "Committed, not yet paid", value: committedUnpaid, className: "stroke-dusty-rose", display: formatCents(committedUnpaid) },
+              ]}
+            >
+              <div className="grid gap-0.5">
+                <span className="num font-display text-3xl leading-none">{formatPercent(budget.committed, budget.totalBudget)}</span>
+                <span className="text-[11px] text-muted">committed</span>
+              </div>
+            </Ring>
+            <div className="grid w-full min-w-0 gap-4">
+              <p className="text-sm text-cocoa">
+                <span className="num font-display text-3xl text-chocolate">{formatCents(budget.committed)}</span> committed of{" "}
+                <span className="num">{formatCents(budget.totalBudget)}</span>
+              </p>
+              <Legend
+                items={[
+                  { label: "Paid", value: formatCents(budget.paid), swatch: "bg-desert-rose" },
+                  { label: "Committed, not yet paid", value: formatCents(committedUnpaid), swatch: "bg-dusty-rose" },
+                  { label: "Not yet committed", value: formatCents(budget.uncommitted), swatch: "bg-linen border border-rule-strong" },
+                ]}
+              />
+            </div>
+          </div>
+          <p className="flex flex-wrap items-center gap-x-2 border-t border-rule pt-4 text-[13px] text-cocoa">
+            <span className="label-caps text-[10px]">Contingency</span>
+            <span className={`num ${budget.contingency.available < 0 ? "text-brick" : ""}`}>
+              {formatCents(budget.contingency.available)} of {formatCents(budget.contingency.estimate)} left
+            </span>
+          </p>
+        </Card>
+
+        <div className="grid gap-5 lg:col-span-5">
+          <Card className="grid content-start gap-4 p-6" aria-labelledby="next-pay-h">
+            <CardHeading id="next-pay-h" title="Next payment" action={<MoreLink href="/budget">Schedule</MoreLink>} />
+            {next ? (
+              <div className="grid gap-2">
+                <p className="num font-display text-[44px] leading-none">
+                  {next.amountCents === null ? "TBD" : formatCents(next.amountCents)}
+                </p>
+                <p className="text-[15px]">{next.item.vendorName ?? next.item.description}</p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="text-sm text-cocoa">{formatDate(next.payment.dueDate, "weekday-medium")}</span>
+                  <ToneBadge tone={stateTone(next.state)}>{relativeDays(next.daysUntil)}</ToneBadge>
+                </div>
+              </div>
+            ) : (
+              <p className="text-cocoa">Everything is paid.</p>
+            )}
+          </Card>
+
+          <Card className="grid content-start gap-4 p-6" aria-labelledby="sizing-h">
+            <CardHeading id="sizing-h" title="Dresses & sizing due" action={<MoreLink href="/party">Party</MoreLink>} />
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className={`num font-display text-[44px] leading-none ${d.sizing.tone === "overdue" ? "text-brick" : ""}`}>
+                {Math.abs(d.sizing.daysLeft).toLocaleString("en-US")}
+              </span>
+              <span className="font-display text-lg text-cocoa italic">
+                {d.sizing.daysLeft >= 0 ? "days until " : "days since "}
+                {formatDate(d.sizing.deadline, "weekday-medium")}
+              </span>
+            </div>
+            <ToneBadge tone={d.sizing.tone}>
+              {d.sizing.notSubmitted === 0
+                ? "Everyone has sent sizing"
+                : `${d.sizing.notSubmitted} of ${d.sizing.dressWearers} sizes outstanding`}
+            </ToneBadge>
+          </Card>
+        </div>
+
+        <Card className="grid content-start gap-5 p-6 sm:p-7 lg:col-span-7" aria-labelledby="headcount-h">
+          <CardHeading
+            id="headcount-h"
+            title={`Headcount & the venue's ${settings.includedHeadcount}`}
+            action={<MoreLink href="/guests">Guests</MoreLink>}
+          />
           <HeadcountCard
             headroom={headroom}
             headcount={headcount}
             contingencyAvailable={budget.contingency.available}
             overageDue={d.overageDue}
           />
-        </section>
+        </Card>
 
-        <div className="grid content-start gap-10">
-          <section className="grid gap-4" aria-labelledby="sizing-h">
-            <p id="sizing-h" className="label-caps">
-              Dress selection &amp; sizing deadline
-            </p>
-            <div className="grid gap-3 border-y border-rule py-5">
-              <p className="flex flex-wrap items-baseline gap-3">
-                <span className={`num font-display text-[56px] leading-none ${d.sizing.tone === "overdue" ? "text-brick" : ""}`}>
-                  {Math.abs(d.sizing.daysLeft).toLocaleString("en-US")}
-                </span>
-                <span className="font-display text-xl text-cocoa italic">
-                  {d.sizing.daysLeft >= 0 ? "days until " : "days since "}
-                  {formatDate(d.sizing.deadline, "weekday-medium")}
-                </span>
+        <Card className="grid content-start gap-6 p-6 sm:p-7 lg:col-span-5" aria-labelledby="progress-h">
+          <CardHeading id="progress-h" title="Planning progress" action={<MoreLink href="/tasks">Tasks</MoreLink>} />
+          <div className="flex items-center gap-5">
+            <Ring
+              size={112}
+              thickness={8}
+              total={d.tasks.total}
+              label={`Checklist: ${d.tasks.done} of ${d.tasks.total} tasks done`}
+              segments={[{ label: "Done", value: d.tasks.done, className: "stroke-garden", display: String(d.tasks.done) }]}
+            >
+              <span className="num font-display text-2xl leading-none">{formatPercent(d.tasks.done, d.tasks.total)}</span>
+            </Ring>
+            <div className="grid gap-1">
+              <p className="font-display text-2xl leading-tight">
+                {d.tasks.done} of {d.tasks.total} <em className="italic">done</em>
               </p>
-              <ToneBadge tone={sizingTone}>
-                {d.sizing.notSubmitted === 0
-                  ? "Everyone has submitted"
-                  : `${d.sizing.notSubmitted} of ${d.sizing.dressWearers} haven't sent sizing`}
-              </ToneBadge>
+              <p className="text-sm text-muted">
+                {d.nextTask ? `Next: ${d.nextTask.title}` : "Nothing left on the checklist."}
+              </p>
             </div>
-          </section>
-
-          <section className="grid gap-5" aria-label="Progress">
-            <Meter
-              label="Wedding party attire ready"
-              value={d.attire.ready}
-              max={d.attire.total}
-              fill="bg-dusty-rose"
-            />
+          </div>
+          <div className="grid gap-5 border-t border-rule pt-5">
+            <Meter label="Wedding party attire ready" value={d.attire.ready} max={d.attire.total} fill="bg-dusty-rose" />
             <Meter
               label="Guests seated"
               value={d.seating.seated}
               max={d.seating.total}
               detail={d.seating.total === 0 ? "No guest list yet" : undefined}
             />
-            <Meter label="Tasks complete" value={d.tasks.done} max={d.tasks.total} fill="bg-garden" />
-          </section>
-        </div>
-      </div>
+          </div>
+        </Card>
 
-      <section className="grid gap-5" aria-labelledby="payments-h">
-        <SectionTitle lead="Next" word="Payments" eyebrow="Payment schedule" id="payments-h" />
-        {plan.nextPayments.length === 0 ? (
-          <p className="text-cocoa">Nothing left to pay.</p>
-        ) : (
-          <ul className="border-b border-rule">
-            {plan.nextPayments.map((p) => {
-              const tone: Tone = p.state === "overdue" ? "overdue" : p.state === "due-soon" ? "due-soon" : "neutral";
-              const total = p.item.payments.length;
-              return (
-                <li
-                  key={p.payment.id}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 border-t border-rule py-4 sm:grid-cols-[9rem_minmax(0,1fr)_auto] sm:items-baseline"
-                >
-                  <span className="num col-span-2 text-[13px] text-cocoa sm:col-span-1">
-                    {formatDate(p.payment.dueDate, "weekday-medium")}
-                  </span>
+        <Card className="grid content-start gap-5 p-6 sm:p-7 lg:col-span-7" aria-labelledby="upcoming-h">
+          <CardHeading id="upcoming-h" title="Coming up" action={<MoreLink href="/calendar">Calendar</MoreLink>} />
+          {d.agenda.length === 0 ? (
+            <p className="text-cocoa">Nothing on the calendar for the next four months.</p>
+          ) : (
+            <ol className="grid">
+              {d.agenda.map((item, i) => {
+                const kind = KIND[item.kind];
+                const last = i === d.agenda.length - 1;
+                return (
+                  <li key={item.id} className="grid grid-cols-[3.25rem_1rem_minmax(0,1fr)] gap-x-3">
+                    <div className="pt-0.5 text-right">
+                      <p className="label-caps text-[10px] leading-none">{formatDate(item.date, "month-day").split(" ")[0]}</p>
+                      <p className="num font-display text-[26px] leading-tight">{item.date.slice(8).replace(/^0/, "")}</p>
+                    </div>
+                    <div className="relative flex justify-center" aria-hidden>
+                      <span className={`relative z-10 mt-2 size-2.5 rounded-full ${kind.dot}`} />
+                      {!last ? <span className="absolute top-5 bottom-0 w-px bg-rule" /> : null}
+                    </div>
+                    <div className={`min-w-0 ${last ? "" : "pb-5"}`}>
+                      <p className="text-[15px] leading-snug">{item.title}</p>
+                      <p className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted">
+                        <span>{kind.label}</span>
+                        {item.amountCents != null ? <span className="num">· {formatCents(item.amountCents)}</span> : null}
+                        {item.time ? <span>· {item.time}</span> : null}
+                        <span className={toneText(stateTone(item.state))}>· {relativeDays(daysBetween(today, item.date)).toLowerCase()}</span>
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </Card>
+
+        <Card className="grid content-start gap-4 p-6 sm:p-7 lg:col-span-5" aria-labelledby="payments-h">
+          <CardHeading id="payments-h" title="Payment schedule" action={<MoreLink href="/budget">Budget</MoreLink>} />
+          {plan.nextPayments.length === 0 ? (
+            <p className="text-cocoa">Nothing left to pay.</p>
+          ) : (
+            <ul className="grid">
+              {plan.nextPayments.map((p) => (
+                <li key={p.payment.id} className="flex items-baseline justify-between gap-4 border-b border-rule py-3 last:border-b-0">
                   <span className="min-w-0">
-                    <span className="block text-[15px]">{p.item.vendorName ?? p.item.description}</span>
+                    <span className="block text-sm">{formatDate(p.payment.dueDate, "medium")}</span>
                     <span className="block text-xs text-muted">
-                      {p.payment.sequence ? `Payment ${p.payment.sequence} of ${total} · ` : ""}
-                      {PAYMENT_LABELS[p.payment.kind] ?? "Payment"}
-                      {p.payment.isEstimate ? " · estimate" : ""}
+                      {p.payment.kind === "OVERAGE"
+                        ? "Headcount overage (estimate)"
+                        : p.payment.kind === "SERVICE_CHARGE"
+                          ? "Maître d' service charge"
+                          : `Payment ${p.payment.sequence ?? ""} of ${p.item.payments.length}`}
                     </span>
                   </span>
-                  <span className="text-right">
-                    <span className="num block text-base">
-                      {p.amountCents === null ? "TBD" : (p.payment.isEstimate ? "est. " : "") + formatCents(p.amountCents)}
-                    </span>
-                    <span className={`block text-[11px] font-semibold tracking-[0.12em] uppercase ${toneText(tone)}`}>
+                  <span className="num shrink-0 text-right">
+                    <span className="block">{p.amountCents === null ? "TBD" : formatCents(p.amountCents)}</span>
+                    <span className={`block text-[10.5px] font-semibold tracking-[0.1em] uppercase ${toneText(stateTone(p.state))}`}>
                       {relativeDays(p.daysUntil)}
                     </span>
                   </span>
                 </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className="grid gap-5" aria-labelledby="tasks-h">
-        <SectionTitle lead="This" word="Week" eyebrow="Overdue and due in the next 7 days" id="tasks-h" />
-        {d.tasksDueSoon.length === 0 ? (
-          <div className="grid gap-1 border-y border-rule py-5">
-            <p className="text-cocoa">Nothing overdue or due this week.</p>
-            {d.nextTask ? (
-              <p className="text-sm text-muted">
-                Next up: {d.nextTask.title}, {formatDate(d.nextTask.dueDate, "weekday-medium")} (
-                {relativeDays(d.nextTask.daysUntil).toLowerCase()}).
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <ul className="border-b border-rule">
-            {d.tasksDueSoon.map((t) => (
-              <li key={t.id} className="flex items-baseline justify-between gap-4 border-t border-rule py-3">
-                <span className="min-w-0">{t.title}</span>
-                <span
-                  className={`num shrink-0 text-[11px] font-semibold tracking-[0.12em] uppercase ${toneText(t.state === "overdue" ? "overdue" : "due-soon")}`}
-                >
-                  {relativeDays(t.daysUntil)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Link href="/tasks" className="text-sm text-rose-ink underline underline-offset-4">
-          All tasks
-        </Link>
-      </section>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
+

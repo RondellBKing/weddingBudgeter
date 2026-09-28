@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { loadPlan } from "@/lib/data/plan";
 import { formatDate } from "@/lib/dates";
@@ -10,10 +11,10 @@ export const metadata = { title: "Settings" };
 export default async function SettingsPage() {
   const { settings: s, budget } = await loadPlan();
   return (
-    <div className="grid gap-14">
-      <PageTitle word="Settings" />
+    <div className="grid gap-8 sm:gap-10">
+      <PageTitle word="Settings" intro="The facts the rest of the app is built on." />
 
-      <section className="grid gap-3 border-y border-rule py-5 text-cocoa sm:grid-cols-3">
+      <Card as="section" className="grid gap-5 p-6 text-cocoa sm:grid-cols-3 sm:p-7">
         <div className="grid gap-1">
           <span className="label-caps">Wedding date</span>
           <span>{formatDate(s.weddingDate, "weekday-long")}</span>
@@ -26,9 +27,10 @@ export default async function SettingsPage() {
           <span className="label-caps">Budget not assigned to a category</span>
           <span className="num">{formatCents(budget.unallocated)}</span>
         </div>
-      </section>
+      </Card>
 
-      <SettingsForm
+      <Card className="p-6 sm:p-8">
+        <SettingsForm
         values={{
           partnerOneName: s.partnerOneName,
           partnerTwoName: s.partnerTwoName,
@@ -41,9 +43,10 @@ export default async function SettingsPage() {
           overageTaxPercent: ppmToPercentString(s.overageTaxPpm),
           vendorMealsCountTowardHeadcount: s.vendorMealsCountTowardHeadcount,
         }}
-      />
+        />
+      </Card>
 
-      <section className="grid gap-5 border-t border-rule pt-8" aria-labelledby="signin-h">
+      <Card className="grid gap-5 p-6 sm:p-8" aria-labelledby="signin-h">
         <h2 id="signin-h" className="text-2xl">
           Signing <em className="italic">in</em>
         </h2>
@@ -63,7 +66,7 @@ export default async function SettingsPage() {
           Log out everywhere signs out every phone and computer, including this one, and changes the private calendar
           link. Use it if a phone is lost or the passphrase may have been shared.
         </p>
-      </section>
+      </Card>
     </div>
   );
 }

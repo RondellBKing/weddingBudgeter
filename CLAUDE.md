@@ -102,6 +102,12 @@ word in italic ("Our *Budget*"), quiet sans for data, 1px hairline rules, lots o
 numbers, small uppercase tracked labels (`label-caps`), tabular numbers (`num`).
 
 - Fonts: Cormorant Garamond (500/600 + italic) for titles; Inter for everything else.
+- The look is a wedding planner / stationery suite: the couple's monogram in a double gold ring,
+  small eucalyptus sprigs in card corners (`Sprig`), a gold diamond divider (`Divider`), paper
+  cards on the ivory page (`Card`, `framed` for invitation-style cards), thin line icons drawn
+  for this app (`Icon`), and thin server-rendered rings (`Ring` + `Legend`). Reuse these; keep
+  ornaments to hero and empty-state cards so data pages stay calm.
+- Pages that aren't built yet show a read-only preview of real data plus a `ComingSoon` note.
 - Tokens live in `src/app/globals.css` (`@theme`). Tailwind's default palette is cleared.
   Chocolate #3E2B22 text · Cocoa #5C4033 · Ivory #F7F0E8 background · Paper #FFFCF8 surfaces ·
   Dusty Rose #D9A3A0 (primary accent) · Desert Rose #B5706B (secondary) · Gold #B8912F

@@ -108,7 +108,15 @@ export function weekday(date: CalendarDate): number {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
-type DateStyle = "long" | "medium" | "short" | "weekday-long" | "weekday-medium" | "month-day";
+type DateStyle =
+  | "long"
+  | "medium"
+  | "short"
+  | "weekday-long"
+  | "weekday-medium"
+  | "month-day"
+  | "month-year"
+  | "weekday-short";
 
 const DATE_FORMATS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   long: { year: "numeric", month: "long", day: "numeric" },
@@ -117,6 +125,8 @@ const DATE_FORMATS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   "weekday-long": { weekday: "long", year: "numeric", month: "long", day: "numeric" },
   "weekday-medium": { weekday: "short", year: "numeric", month: "short", day: "numeric" },
   "month-day": { month: "short", day: "numeric" },
+  "month-year": { month: "long", year: "numeric" },
+  "weekday-short": { weekday: "short" },
 };
 
 /** Format a calendar date. Formats the UTC-midnight instant in UTC, so the day never moves. */
@@ -166,4 +176,25 @@ export function dueState(due: CalendarDate, today: CalendarDate, soonDays = 30):
   if (days < 0) return "overdue";
   if (days <= soonDays) return "due-soon";
   return "on-track";
+}
+
+/** Whole months, then leftover days, from one date to a later one ("18 months, 16 days"). */
+export function monthsAndDaysBetween(from: CalendarDate, to: CalendarDate): { months: number; days: number } {
+  if (compareDates(to, from) < 0) return { months: 0, days: 0 };
+  let months = 0;
+  while (compareDates(addMonths(from, months + 1), to) <= 0) months++;
+  return { months, days: daysBetween(addMonths(from, months), to) };
+}
+
+/** "Good morning" / "Good afternoon" / "Good evening" for the wedding's time zone. */
+export function greetingFor(timeZone: string = WEDDING_TZ, now: Date = new Date()): string {
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hourCycle: "h23" }).format(now));
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+/** "YYYY-MM" month key for grouping. */
+export function monthKey(date: CalendarDate): string {
+  return date.slice(0, 7);
 }

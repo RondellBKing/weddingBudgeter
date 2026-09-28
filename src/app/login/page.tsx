@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/require-session";
 import { safeNextPath } from "@/lib/auth/request";
+import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
+import { Divider, Monogram, Sprig } from "@/components/ui/Ornaments";
 
 export const metadata = { title: "Sign in" };
 
@@ -31,50 +34,61 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         : undefined;
 
   return (
-    <main className="grid min-h-dvh place-items-center px-4 py-16">
-      <div className="grid w-full max-w-sm gap-10">
-        <header className="grid gap-3 text-center">
-          <p className="label-caps">Rondell &amp; Capri</p>
-          <h1 className="text-[52px] leading-none">
-            Wedding <em className="italic">HQ</em>
-          </h1>
-          <p className="text-sm text-muted">Thursday, April 13, 2028</p>
-        </header>
+    <main className="grid min-h-dvh place-items-center px-4 py-10">
+      <div className="grid w-full max-w-md gap-6">
+        <Card framed as="div" className="overflow-hidden px-7 pt-14 pb-10 sm:px-12">
+          <Sprig className="pointer-events-none absolute -top-2 -left-8 w-40 opacity-90" />
+          <Sprig flip="xy" className="pointer-events-none absolute -right-8 -bottom-2 w-40 opacity-90" />
 
-        <form action="/api/login" method="post" className="grid gap-5 border-t border-rule pt-8">
-          <input type="hidden" name="next" value={next} />
-          <div className="grid gap-2">
-            <label htmlFor="password" className="label-caps">
-              Passphrase
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              autoFocus
-              aria-invalid={error?.tone === "error" ? true : undefined}
-              aria-describedby={error || info ? "login-message" : undefined}
-              className="w-full rounded-[2px] border border-rule-strong bg-paper px-3 py-3 text-base text-chocolate aria-[invalid=true]:border-brick"
-            />
-          </div>
-          {error || info ? (
-            <p
-              id="login-message"
-              role={error ? "alert" : "status"}
-              className={`text-sm ${error ? "text-brick" : "text-garden-ink"}`}
+          <header className="relative grid justify-items-center gap-4 text-center">
+            <Monogram first="Rondell" second="Capri" size="lg" />
+            <p className="label-caps tracking-[0.28em] text-rose-ink">The wedding planner of</p>
+            <h1 className="text-[44px] leading-none sm:text-[52px]">
+              Rondell <em className="text-rose-ink italic">&amp;</em> Capri
+            </h1>
+            <Divider className="w-36" />
+            <p className="text-[11px] font-medium tracking-[0.3em] text-cocoa uppercase">Thursday · April 13 · 2028</p>
+          </header>
+
+          <form action="/api/login" method="post" className="relative mt-10 grid gap-4">
+            <input type="hidden" name="next" value={next} />
+            <div className="grid gap-2">
+              <label htmlFor="password" className="label-caps">
+                Passphrase
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                autoFocus
+                aria-invalid={error?.tone === "error" ? true : undefined}
+                aria-describedby={error || info ? "login-message" : undefined}
+                className="w-full rounded-[3px] border border-rule-strong bg-ivory/50 px-4 py-3 text-base text-chocolate transition-colors focus:border-desert-rose focus:bg-paper aria-[invalid=true]:border-brick"
+              />
+            </div>
+            {error || info ? (
+              <p
+                id="login-message"
+                role={error ? "alert" : "status"}
+                className={`text-sm ${error ? "text-brick" : "text-garden-ink"}`}
+              >
+                {error?.text ?? info}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              className="mt-1 rounded-[3px] bg-chocolate px-6 py-3.5 text-[13px] font-medium tracking-[0.16em] text-ivory uppercase transition-colors hover:bg-cocoa"
             >
-              {error?.text ?? info}
-            </p>
-          ) : null}
-          <button
-            type="submit"
-            className="rounded-[2px] bg-chocolate px-6 py-3 text-sm font-medium tracking-[0.08em] text-ivory uppercase hover:bg-cocoa"
-          >
-            Sign in
-          </button>
-        </form>
+              Open our planner
+            </button>
+          </form>
+        </Card>
+        <p className="flex items-center justify-center gap-2 text-xs text-muted">
+          <Icon name="lock" size={14} />
+          Private. For the two of us only.
+        </p>
       </div>
     </main>
   );

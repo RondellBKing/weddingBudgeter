@@ -1,5 +1,17 @@
 import "server-only";
-import { addDays, daysBetween, dueState, fromDbDate, toDbDate, type CalendarDate, type DueState } from "../dates";
+import {
+  addDays,
+  daysBetween,
+  dueState,
+  formatInstant,
+  fromDbDate,
+  monthsAndDaysBetween,
+  todayIn,
+  toDbDate,
+  type CalendarDate,
+  type DueState,
+} from "../dates";
+import { buildAgenda } from "../domain/agenda";
 import { prisma } from "../db";
 import { deadlineUrgency } from "../domain/deadlines";
 import { loadPlan } from "./plan";
@@ -18,7 +30,7 @@ export async function loadDashboard() {
   const { today, settings } = plan;
   const weekAhead = addDays(today, 7);
 
-  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount] = await Promise.all([
+  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount, agendaTasks, events] = await Promise.all([
     prisma.task.findMany({
       where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(weekAhead) } },
       orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
@@ -34,6 +46,18 @@ export async function loadDashboard() {
     }),
     prisma.guest.count({ where: { OR: [{ rsvpStatus: null }, { rsvpStatus: { not: "DECLINED" } }] } }),
     prisma.seatAssignment.count({ where: { guest: { OR: [{ rsvpStatus: null }, { rsvpStatus: { not: "DECLINED" } }] } } }),
+    prisma.task.findMany({
+      where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(addDays(today, 120)) } },
+      select: { id: true, title: true, dueDate: true, isMilestone: true },
+    }),
+    prisma.calendarEvent.findMany({
+      where: {
+        OR: [
+          { allDayDate: { gte: toDbDate(today), lte: toDbDate(addDays(today, 120)) } },
+          { startAt: { gte: toDbDate(today), lte: toDbDate(addDays(today, 121)) } },
+        ],
+      },
+    }),
   ]);
 
   const toTask = (t: (typeof dueSoon)[number]): DashboardTask => {
@@ -52,9 +76,42 @@ export async function loadDashboard() {
   const doneTasks = taskCounts.find((g) => g.status === "DONE")?._count._all ?? 0;
   const dressWearers = party.filter((m) => m.outfitType === "DRESS");
 
+  const vendorFor = new Map(plan.items.map((i) => [i.id, i.vendorName ?? i.description]));
+  const agenda = buildAgenda(
+    {
+      payments: plan.nextPayments.map((p) => ({
+        id: p.payment.id,
+        dueDate: p.payment.dueDate,
+        paidDate: null,
+        title: vendorFor.get(p.item.id) ?? "Payment",
+        detail: p.payment.sequence ? `Payment ${p.payment.sequence} of ${p.item.payments.length}` : "Payment",
+        amountCents: p.amountCents,
+      })),
+      tasks: agendaTasks.map((t) => ({
+        id: t.id,
+        dueDate: fromDbDate(t.dueDate),
+        title: t.title,
+        isMilestone: t.isMilestone,
+        done: false,
+      })),
+      events: events.map((e) => ({
+        id: e.id,
+        // An appointment's day is its date in the wedding's time zone.
+        date: e.allDayDate ? fromDbDate(e.allDayDate) : todayIn(settings.timezone, e.startAt!),
+        title: e.title,
+        time: e.startAt ? formatInstant(e.startAt, settings.timezone, { hour: "numeric", minute: "2-digit" }) : undefined,
+        detail: e.location ?? undefined,
+      })),
+    },
+    today,
+    { until: addDays(today, 120) },
+  ).slice(0, 7);
+
   return {
     plan,
+    agenda,
     daysToGo: daysBetween(today, settings.weddingDate),
+    untilWedding: monthsAndDaysBetween(today, settings.weddingDate),
     tasksDueSoon: dueSoon.filter((t) => t.dueDate).map(toTask),
     nextTask: nextTask?.dueDate ? toTask(nextTask) : null,
     tasks: { done: doneTasks, total: totalTasks },
