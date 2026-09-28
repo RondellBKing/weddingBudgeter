@@ -12,10 +12,12 @@ import {
 // inside every page, Server Action and route handler.
 
 const PUBLIC_PATHS = new Set(["/login", "/api/login"]);
+// The calendar feed: phone calendar apps can't sign in. The route checks its own secret token.
+const PUBLIC_PREFIXES = ["/api/calendar/"];
 
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
-  if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
+  if (PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
   const token = req.cookies.get(sessionCookieName())?.value;
   const session = token ? await verifySessionToken(token) : null;

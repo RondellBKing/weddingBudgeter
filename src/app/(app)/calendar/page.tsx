@@ -1,23 +1,37 @@
-import { Card } from "@/components/ui/Card";
-import { ComingSoon } from "@/components/ui/ComingSoon";
+import Link from "next/link";
+import { headers } from "next/headers";
+import { AgendaView } from "@/components/calendar/AgendaView";
+import { KIND, KIND_ORDER } from "@/components/calendar/kinds";
+import { MonthView } from "@/components/calendar/MonthView";
+import { SubscribeCard } from "@/components/calendar/SubscribeCard";
+import { TimelineView } from "@/components/calendar/TimelineView";
+import { buttonClass } from "@/components/ui/Button";
 import { PageTitle } from "@/components/ui/PageTitle";
-import { loadCalendarPage } from "@/lib/data/pages";
-import { daysBetween, formatDate, relativeDays } from "@/lib/dates";
-import { groupByMonth, type AgendaKind } from "@/lib/domain/agenda";
-import { formatCents } from "@/lib/money";
+import { Tabs } from "@/components/ui/Tabs";
+import { loadCalendar, loadFeedToken } from "@/lib/data/calendar";
+import { parseMonth } from "@/lib/domain/calendar-grid";
 
 export const metadata = { title: "Calendar" };
 
-const KIND: Record<AgendaKind, { label: string; dot: string }> = {
-  milestone: { label: "Milestone", dot: "bg-desert-rose" },
-  payment: { label: "Payment", dot: "bg-gold" },
-  event: { label: "Appointment", dot: "bg-garden" },
-  task: { label: "Task", dot: "border border-desert-rose bg-paper" },
-};
+type View = "agenda" | "month" | "timeline";
 
-export default async function CalendarPage() {
-  const { today, items, weddingDate } = await loadCalendarPage();
-  const months = groupByMonth(items);
+/** The feed URL as this browser reaches the app (works locally, on previews and in production). */
+async function feedUrl(token: string): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host);
+  const proto = h.get("x-forwarded-proto")?.split(",")[0]?.trim() || (local ? "http" : "https");
+  return `${proto}://${host}/api/calendar/${encodeURIComponent(token)}.ics`;
+}
+
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const sp = await searchParams;
+  const view: View = sp.view === "month" ? "month" : sp.view === "timeline" ? "timeline" : "agenda";
+  const [data, token] = await Promise.all([loadCalendar(), loadFeedToken()]);
+  const { today, weddingDate, items, events, plan } = data;
+  const month = parseMonth(sp.month, today);
+  const back = view === "month" ? `/calendar?view=month&month=${month}` : view === "timeline" ? "/calendar?view=timeline" : "/calendar";
+  const newHref = `/calendar/new?back=${encodeURIComponent(back)}`;
 
   return (
     <div className="grid gap-8 sm:gap-10">
@@ -25,79 +39,70 @@ export default async function CalendarPage() {
         word="Calendar"
         eyebrow="Plan"
         intro="Every appointment, payment and deadline between now and the wedding, in one place."
+        actions={
+          <>
+            <Link href={`/tasks/new?back=${encodeURIComponent(back)}`} className={buttonClass("secondary")}>
+              New task
+            </Link>
+            <Link href={newHref} className={buttonClass("primary")}>
+              Add appointment
+            </Link>
+          </>
+        }
       />
 
-      <ul className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Key">
-        {(Object.keys(KIND) as AgendaKind[]).map((k) => (
-          <li key={k} className="flex items-center gap-2 text-[13px] text-cocoa">
-            <span aria-hidden className={`size-2.5 rounded-full ${KIND[k].dot}`} />
-            {KIND[k].label}
-          </li>
-        ))}
-      </ul>
-
-      <div className="grid gap-5">
-        {months.map((m) => {
-          const [monthName, year] = m.label.split(" ");
-          return (
-            <Card key={m.key} as="section" aria-label={m.label} className="grid gap-2 p-6 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-8 sm:p-8">
-              <h2 className="leading-none">
-                <span className="font-display text-[30px] italic">{monthName}</span>
-                <span className="label-caps mt-1.5 block text-[10px]">{year}</span>
-              </h2>
-              <ol className="grid">
-                {m.items.map((item) => {
-                  const isWedding = item.date === weddingDate;
-                  const kind = KIND[item.kind];
-                  const days = daysBetween(today, item.date);
-                  return (
-                    <li
-                      key={item.id}
-                      className={`grid grid-cols-[3rem_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-rule py-3.5 first:pt-1 last:border-b-0 ${
-                        isWedding ? "-mx-3 rounded-[3px] bg-linen/60 px-3 ring-1 ring-gold/40" : ""
-                      }`}
-                    >
-                      <span className="text-center leading-none">
-                        <span className="label-caps block text-[10px]">{formatDate(item.date, "weekday-short")}</span>
-                        <span className="num mt-1 block font-display text-[26px]">{Number(item.date.slice(8))}</span>
-                      </span>
-                      <span className="min-w-0 pt-0.5">
-                        <span className="flex items-start gap-2.5">
-                          <span aria-hidden className={`mt-[7px] size-2 shrink-0 rounded-full ${kind.dot}`} />
-                          <span className="min-w-0">
-                            <span className={`block text-[15px] leading-snug ${isWedding ? "font-display text-xl" : ""}`}>{item.title}</span>
-                            <span className="block text-xs text-muted">
-                              {kind.label}
-                              {item.detail ? ` · ${item.detail}` : ""}
-                            </span>
-                          </span>
-                        </span>
-                      </span>
-                      <span className="pt-0.5 text-right">
-                        {item.amountCents != null ? <span className="num block text-sm">{formatCents(item.amountCents)}</span> : null}
-                        {days <= 30 ? (
-                          <span className={`block text-[10px] font-semibold tracking-[0.1em] uppercase ${days < 0 ? "text-brick" : "text-gold-ink"}`}>
-                            {relativeDays(days)}
-                          </span>
-                        ) : null}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            </Card>
-          );
-        })}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <Tabs
+          label="View"
+          current={view}
+          items={[
+            { key: "agenda", label: "Agenda", href: "/calendar" },
+            { key: "month", label: "Month", href: `/calendar?view=month${sp.month ? `&month=${month}` : ""}` },
+            { key: "timeline", label: "Timeline", href: "/calendar?view=timeline" },
+          ]}
+        />
+        {view !== "timeline" ? (
+          <ul className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Key">
+            {KIND_ORDER.map((k) => (
+              <li key={k} className="flex items-center gap-2 text-[13px] text-cocoa">
+                <span aria-hidden className={`size-2.5 rounded-full ${KIND[k].dot}`} />
+                {KIND[k].label}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Key">
+            <li className="flex items-center gap-2 text-[13px] text-cocoa">
+              <span aria-hidden className="size-2.5 rotate-45 bg-desert-rose" />
+              Milestone
+            </li>
+            <li className="flex items-center gap-2 text-[13px] text-cocoa">
+              <span aria-hidden className="size-2.5 rounded-full bg-gold" />
+              Payment
+            </li>
+            <li className="flex items-center gap-2 text-[13px] text-cocoa">
+              <span aria-hidden className="size-2.5 rounded-full border-2 border-brick" />
+              Behind
+            </li>
+          </ul>
+        )}
       </div>
 
-      <ComingSoon
-        phase={3}
-        items={[
-          "Add tastings, fittings and meetings",
-          "Month view, with this list as the default on phones",
-          "A milestone timeline, and a private link so it shows up in our phone calendars",
-        ]}
-      />
+      {view === "month" ? (
+        <MonthView month={month} items={items} events={events} today={today} weddingDate={weddingDate} />
+      ) : view === "timeline" ? (
+        <TimelineView
+          items={items}
+          today={today}
+          weddingDate={weddingDate}
+          weddingTaskIds={data.weddingTaskIds}
+          venue={`${plan.settings.venueName}, ${plan.settings.venueAddress}`}
+        />
+      ) : (
+        <AgendaView items={items} events={events} today={today} weddingDate={weddingDate} back={back} />
+      )}
+
+      <SubscribeCard feedUrl={await feedUrl(token)} />
     </div>
   );
 }
