@@ -1,29 +1,54 @@
-import { ComingSoon } from "@/components/ui/ComingSoon";
-import { EmptyState } from "@/components/ui/EmptyState";
+import Link from "next/link";
+import { FloorPlan } from "@/components/seating/FloorPlan";
+import { SeatingSummary } from "@/components/seating/SeatingSummary";
+import { SeatingWorkspace } from "@/components/seating/SeatingWorkspace";
+import { FirstTables } from "@/components/seating/TableForms";
+import { buttonClass } from "@/components/ui/Button";
 import { PageTitle } from "@/components/ui/PageTitle";
+import { Tabs } from "@/components/ui/Tabs";
 import { requireSession } from "@/lib/auth/require-session";
+import { loadSeating } from "@/lib/data/seating";
+import { seatingCounts } from "@/lib/domain/seating";
 
 export const metadata = { title: "Seating Plan" };
 
-export default async function SeatingPage() {
+export default async function SeatingPage({ searchParams }: PageProps<"/seating">) {
   await requireSession();
+  const { view } = await searchParams;
+  const current = view === "floor" ? "floor" : "tables";
+  const { tables, guests } = await loadSeating();
+
   return (
     <div className="grid gap-8 sm:gap-10">
-      <PageTitle word="Seating Plan" eyebrow="People" intro="Tables, and who sits where. This is one of the last things we'll do, once RSVPs are in." />
-      <EmptyState icon="seating" title="No tables" word="yet">
-        <p>
-          After the guest list is imported and RSVPs close, we&apos;ll set out the tables and seat everyone, whole
-          households at a time.
-        </p>
-      </EmptyState>
-      <ComingSoon
-        phase={5}
-        items={[
-          "Drag guests and whole households onto tables",
-          "Warnings when a table is over capacity",
-          "A simple list on phones, and a printable table-by-table list for the venue and caterer",
-        ]}
+      <PageTitle
+        word="Seating Plan"
+        eyebrow="People"
+        intro="Who sits where. Seat whole households at once, keep an eye on each table's seats, and print the chart for the venue and the caterer."
+        actions={
+          <>
+            <Tabs
+              label="Seating views"
+              current={current}
+              items={[
+                { key: "tables", label: "Tables", href: "/seating" },
+                { key: "floor", label: "Floor plan", href: "/seating?view=floor" },
+              ]}
+            />
+            <Link href="/seating/print" className={buttonClass("secondary", "sm")}>
+              Print chart
+            </Link>
+          </>
+        }
       />
+
+      {current === "floor" ? (
+        <div className="grid gap-8 sm:gap-10">
+          <SeatingSummary counts={seatingCounts(tables, guests)} />
+          {tables.length === 0 ? <FirstTables tables={tables} /> : <FloorPlan tables={tables} guests={guests} />}
+        </div>
+      ) : (
+        <SeatingWorkspace tables={tables} guests={guests} />
+      )}
     </div>
   );
 }
