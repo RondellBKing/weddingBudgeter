@@ -88,3 +88,11 @@ export function groupByMonth<T extends { date: CalendarDate }>(items: T[]): Arra
   }
   return groups;
 }
+
+/** How a payment reads in the calendar ("Payment 2 of 6", "Headcount overage (estimate)"). */
+export function paymentDetail(p: { kind: string; sequence: number | null }, paymentsOnItem: number): string {
+  if (p.kind === "OVERAGE") return "Headcount overage (estimate)";
+  if (p.kind === "SERVICE_CHARGE") return "Maître d' service charge";
+  if (p.sequence) return `Payment ${p.sequence} of ${paymentsOnItem}`;
+  return "Payment";
+}
