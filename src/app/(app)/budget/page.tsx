@@ -106,9 +106,14 @@ function Overview({ plan, includedHeadcount }: { plan: Plan; includedHeadcount: 
               total={budget.totalBudget}
               label={`${largest?.name}: ${formatCents(largest?.estimateCents ?? 0)}. Everything else: ${formatCents(restEstimate)}. Contingency: ${formatCents(contingency.estimate)}. Not assigned: ${formatCents(budget.unallocated)}.`}
               segments={[
-                { label: largest?.name ?? "Venue", value: largest?.estimateCents ?? 0, className: "stroke-dusty-rose" },
-                { label: "Everything else", value: restEstimate, className: "stroke-desert-rose" },
-                { label: "Contingency", value: contingency.estimate, className: "stroke-cocoa" },
+                {
+                  label: largest?.name ?? "Venue",
+                  value: largest?.estimateCents ?? 0,
+                  className: "stroke-dusty-rose",
+                  display: formatCents(largest?.estimateCents ?? 0),
+                },
+                { label: "Everything else", value: restEstimate, className: "stroke-desert-rose", display: formatCents(restEstimate) },
+                { label: "Contingency", value: contingency.estimate, className: "stroke-cocoa", display: formatCents(contingency.estimate) },
               ]}
             >
               <div className="grid gap-0.5">
