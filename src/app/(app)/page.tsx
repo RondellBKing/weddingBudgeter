@@ -87,6 +87,29 @@ export default async function DashboardPage() {
         </div>
       </Card>
 
+      {d.tasksDueSoon.length > 0 || d.overduePayments.length > 0 ? (
+        <Card className="grid gap-4 border-l-2 border-l-brick p-6 sm:p-7" aria-labelledby="attention-h">
+          <CardHeading id="attention-h" title="Needs attention" action={<MoreLink href="/tasks">Tasks</MoreLink>} />
+          <ul className="grid">
+            {d.overduePayments.map((p) => (
+              <li key={p.payment.id} className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5 last:border-b-0">
+                <span className="min-w-0">
+                  Pay {p.item.vendorName ?? p.item.description}
+                  {p.amountCents != null ? <span className="num text-cocoa"> · {formatCents(p.amountCents)}</span> : null}
+                </span>
+                <ToneBadge tone="overdue">{relativeDays(p.daysUntil)}</ToneBadge>
+              </li>
+            ))}
+            {d.tasksDueSoon.map((t) => (
+              <li key={t.id} className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5 last:border-b-0">
+                <span className="min-w-0">{t.title}</span>
+                <ToneBadge tone={t.state === "overdue" ? "overdue" : "due-soon"}>{relativeDays(t.daysUntil)}</ToneBadge>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
       {/* At a glance */}
       <div className="grid gap-5 lg:grid-cols-12">
         <Card className="grid gap-6 p-6 sm:p-7 lg:col-span-7" aria-labelledby="budget-h">
@@ -109,6 +132,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-cocoa">
                 <span className="num font-display text-3xl text-chocolate">{formatCents(budget.committed)}</span> committed of{" "}
                 <span className="num">{formatCents(budget.totalBudget)}</span>
+                <span className="num text-muted"> · {formatPercent(budget.paid, budget.totalBudget)} paid</span>
               </p>
               <Legend
                 items={[
@@ -268,6 +292,79 @@ export default async function DashboardPage() {
                     <span className="block">{p.amountCents === null ? "TBD" : formatCents(p.amountCents)}</span>
                     <span className={`block text-[10.5px] font-semibold tracking-[0.1em] uppercase ${toneText(stateTone(p.state))}`}>
                       {relativeDays(p.daysUntil)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="grid content-start gap-5 p-6 sm:p-7 lg:col-span-7" aria-labelledby="vendors-h">
+          <CardHeading id="vendors-h" title="Vendors" action={<MoreLink href="/vendors">Vendors</MoreLink>} />
+          <p className="font-display text-2xl leading-snug">
+            {d.categoriesBooked} of {d.categoriesTotal} <em className="italic">booked</em>
+          </p>
+          {(() => {
+            const parts = [
+              { key: "BOOKED", label: "Booked", cls: "bg-garden" },
+              { key: "QUOTED", label: "Quoted", cls: "bg-desert-rose" },
+              { key: "CONTACTED", label: "Contacted", cls: "bg-dusty-rose" },
+              { key: "RESEARCHING", label: "Researching", cls: "bg-linen border border-rule-strong" },
+            ];
+            const total = parts.reduce((s, p) => s + (d.vendorStatus[p.key] ?? 0), 0);
+            return (
+              <div className="grid gap-3">
+                <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-[2px] bg-linen" role="img" aria-label={parts.map((p) => `${d.vendorStatus[p.key] ?? 0} ${p.label.toLowerCase()}`).join(", ")}>
+                  {total > 0
+                    ? parts.map((p) =>
+                        (d.vendorStatus[p.key] ?? 0) > 0 ? (
+                          <span key={p.key} className={`h-full ${p.cls}`} style={{ flexGrow: d.vendorStatus[p.key] }} />
+                        ) : null,
+                      )
+                    : null}
+                </div>
+                <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-cocoa">
+                  {parts.map((p) => (
+                    <li key={p.key} className="flex items-center gap-2">
+                      <span aria-hidden className={`size-2.5 rounded-[2px] ${p.cls}`} />
+                      <span className="num">{d.vendorStatus[p.key] ?? 0}</span> {p.label.toLowerCase()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
+          {d.stillNeeded.length > 0 ? (
+            <div className="grid gap-2 border-t border-rule pt-4">
+              <p className="label-caps text-[10px]">Nobody booked yet</p>
+              <ul className="flex flex-wrap gap-2">
+                {d.stillNeeded.map((c) => (
+                  <li key={c} className="rounded-full border border-rule-strong px-3 py-1 text-[12px] text-cocoa">
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </Card>
+
+        <Card className="grid content-start gap-4 p-6 sm:p-7 lg:col-span-5" aria-labelledby="appts-h">
+          <CardHeading id="appts-h" title="Appointments · next 30 days" action={<MoreLink href="/calendar">Calendar</MoreLink>} />
+          {d.appointments.length === 0 ? (
+            <p className="text-sm text-cocoa">Nothing booked in the next 30 days.</p>
+          ) : (
+            <ul className="grid">
+              {d.appointments.map((a) => (
+                <li key={a.id} className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-3 border-b border-rule py-3 last:border-b-0">
+                  <span className="text-center leading-none">
+                    <span className="label-caps block text-[10px]">{formatDate(a.date, "weekday-short")}</span>
+                    <span className="num mt-1 block font-display text-2xl">{Number(a.date.slice(8))}</span>
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] leading-snug">{a.title}</span>
+                    <span className="block text-xs text-muted">
+                      {[formatDate(a.date, "month-day"), a.time, a.location, a.vendorName].filter(Boolean).join(" · ")}
                     </span>
                   </span>
                 </li>

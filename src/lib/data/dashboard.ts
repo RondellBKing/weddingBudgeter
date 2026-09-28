@@ -14,6 +14,7 @@ import {
 import { buildAgenda } from "../domain/agenda";
 import { prisma } from "../db";
 import { deadlineUrgency } from "../domain/deadlines";
+import { coverage } from "../domain/vendors";
 import { loadPlan } from "./plan";
 
 export type DashboardTask = {
@@ -30,7 +31,7 @@ export async function loadDashboard() {
   const { today, settings } = plan;
   const weekAhead = addDays(today, 7);
 
-  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount, agendaTasks, events] = await Promise.all([
+  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount, agendaTasks, events, vendors] = await Promise.all([
     prisma.task.findMany({
       where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(weekAhead) } },
       orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
@@ -57,7 +58,9 @@ export async function loadDashboard() {
           { startAt: { gte: toDbDate(today), lte: toDbDate(addDays(today, 121)) } },
         ],
       },
+      include: { vendor: { select: { name: true } } },
     }),
+    prisma.vendor.findMany({ select: { name: true, category: true, alsoCovers: true, status: true } }),
   ]);
 
   const toTask = (t: (typeof dueSoon)[number]): DashboardTask => {
@@ -107,9 +110,32 @@ export async function loadDashboard() {
     { until: addDays(today, 120) },
   ).slice(0, 7);
 
+  // Appointments in the next 30 days, in New York time.
+  const appointments = events
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      date: e.allDayDate ? fromDbDate(e.allDayDate) : todayIn(settings.timezone, e.startAt!),
+      time: e.startAt ? formatInstant(e.startAt, settings.timezone, { hour: "numeric", minute: "2-digit" }) : null,
+      location: e.location,
+      vendorName: e.vendor?.name ?? null,
+    }))
+    .filter((e) => daysBetween(today, e.date) >= 0 && daysBetween(today, e.date) <= 30)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.time ?? "").localeCompare(b.time ?? "")));
+
+  const statusCounts = { BOOKED: 0, QUOTED: 0, CONTACTED: 0, RESEARCHING: 0 } as Record<string, number>;
+  for (const v of vendors) if (v.status in statusCounts) statusCounts[v.status]!++;
+  const cover = coverage(vendors);
+
   return {
     plan,
     agenda,
+    appointments,
+    vendorStatus: statusCounts,
+    stillNeeded: cover.filter((c) => c.booked.length === 0).map((c) => c.label),
+    categoriesBooked: cover.filter((c) => c.booked.length > 0).length,
+    categoriesTotal: cover.length,
+    overduePayments: plan.nextPayments.filter((p) => p.state === "overdue"),
     daysToGo: daysBetween(today, settings.weddingDate),
     untilWedding: monthsAndDaysBetween(today, settings.weddingDate),
     tasksDueSoon: dueSoon.filter((t) => t.dueDate).map(toTask),
