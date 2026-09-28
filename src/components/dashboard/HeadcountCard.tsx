@@ -51,10 +51,14 @@ export function HeadcountCard({
   }
 
   // Track scale: from 100 people up to comfortably past break-even and the current count.
-  const min = Math.min(100, hc - 5);
+  const min = Math.max(0, Math.min(100, hc - 5));
   const max = Math.max(175, (breakEvenHeadcount ?? includedHeadcount) + 20, hc + 10);
-  const pos = (n: number) => `${(((Math.min(Math.max(n, min), max) - min) / (max - min)) * 100).toFixed(2)}%`;
+  const pct = (n: number) => ((Math.min(Math.max(n, min), max) - min) / (max - min)) * 100;
+  const pos = (n: number) => `${pct(n).toFixed(2)}%`;
   const be = breakEvenHeadcount ?? includedHeadcount;
+  // "125 included" and "145 buffer gone" sit close together on a phone, and on any screen when
+  // the scale is wide (a short guest list): then the second label drops onto its own line.
+  const stagger = pct(be) - pct(includedHeadcount) < 26;
 
   return (
     <div className="grid gap-5">
@@ -68,7 +72,7 @@ export function HeadcountCard({
         <ToneBadge tone={tone}>{status}</ToneBadge>
       </div>
 
-      <div className="relative h-11" aria-hidden>
+      <div className={`relative h-16 ${stagger ? "" : "sm:h-11"}`} aria-hidden>
         <div className="absolute inset-x-0 top-3.5 flex h-2 gap-0.5">
           <div className="h-full rounded-[1px] bg-linen" style={{ width: pos(includedHeadcount) }} />
           <div
@@ -90,7 +94,10 @@ export function HeadcountCard({
           {includedHeadcount} included
         </span>
         {breakEvenHeadcount !== null && breakEvenHeadcount !== includedHeadcount ? (
-          <span className="num absolute top-7 -translate-x-1/2 text-[11px] whitespace-nowrap text-muted" style={{ left: pos(breakEvenHeadcount) }}>
+          <span
+            className={`num absolute -translate-x-1/2 text-[11px] whitespace-nowrap text-muted top-12 ${stagger ? "" : "sm:top-7"}`}
+            style={{ left: pos(breakEvenHeadcount) }}
+          >
             {breakEvenHeadcount} buffer gone
           </span>
         ) : null}

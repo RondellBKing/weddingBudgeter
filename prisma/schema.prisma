@@ -54,7 +54,7 @@ model WeddingSettings {
 model AuthState {
   id           Int      @id @default(1)
   sessionEpoch Int      @default(1)
-  /// Secret path segment for the calendar subscription feed (Phase 3).
+  /// Secret path segment for the calendar subscription feed.
   icsToken     String
   updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 }
@@ -371,7 +371,7 @@ model WeddingPartyMember {
   sortOrder            Int
   email                String?
   phone                String?
-  /// Link to their guest row so they're seated and counted (Phase 5).
+  /// Link to their guest row so they're seated and counted (not set by the CSV import yet).
   guestId              String?       @unique
   guest                Guest?        @relation(fields: [guestId], references: [id], onDelete: SetNull)
   askedOn              DateTime?     @db.Date

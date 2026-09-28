@@ -355,7 +355,7 @@ export default async function DashboardPage() {
         </Card>
 
         <Card className="grid content-start gap-4 p-6 sm:p-7 lg:col-span-5" aria-labelledby="appts-h">
-          <CardHeading id="appts-h" title="Appointments · next 30 days" action={<MoreLink href="/calendar">Calendar</MoreLink>} />
+          <CardHeading id="appts-h" title="Appointments" action={<MoreLink href="/calendar">Calendar</MoreLink>} />
           {d.appointments.length === 0 ? (
             <p className="text-sm text-cocoa">Nothing booked in the next 30 days.</p>
           ) : (

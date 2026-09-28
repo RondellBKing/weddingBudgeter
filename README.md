@@ -64,7 +64,7 @@ No command line needed. Everything happens in the browser.
      **Settings → Environment Variables** (Production), then **Redeploy** once more.
    - **Sign in** with the passphrase.
 
-After that, every push to the repository's main branch redeploys automatically, and schema
+After that, every push to the repository's default branch redeploys automatically, and schema
 changes are applied during the deploy (`npm run vercel-build` runs `scripts/prepare-db.ts`).
 Preview deployments never touch the production database.
 

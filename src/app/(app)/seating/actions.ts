@@ -21,8 +21,8 @@ import { TABLE_SHAPE_LABEL, valuesOf } from "@/lib/labels";
 const zId = z.string().trim().min(1).max(64);
 
 function refresh() {
-  // The board, the floor plan and the printout.
-  revalidatePath("/seating", "layout");
+  // The board, the floor plan, the printout and the dashboard's seating count.
+  revalidatePath("/", "layout");
 }
 
 // ─── Moving guests ─────────────────────────────────────────────────────────────

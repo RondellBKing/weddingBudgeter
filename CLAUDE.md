@@ -3,20 +3,18 @@
 Private planning app for Rondell and Capri's wedding. Two users, one shared login, 100% internal.
 This app is the system of record for money, vendors, deadlines, the wedding party and seating.
 
-## Current phase
+## Status
 
-**Phase 0 (Foundation) is done. Next: Phase 1 (Money).** Stop after each phase, run
-typecheck/lint/test/build, commit, and show the user before starting the next one.
+**v1 is built (phases 0–7).** Every module is live: dashboard, budget and payments, vendors,
+tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV import), seating and
+the decision log. What remains is the couple's own deploy (README → "Put it online"), and the
+deferred list below. Before any push: typecheck, lint, test, build.
 
-Phases:
-- 0 Foundation: scaffold, tokens, schema, auth, shell, seed, backup/restore. ✅
-- 1 Money: budget categories and items, payments, budget page, payment schedule.
-- 2 Vendors: CRUD, detail pages, coverage view, links to budget items and payments.
-- 3 Tasks + Calendar: task views, the seeded checklist, merged calendar, milestones, .ics feed.
-- 4 Wedding party: 14-member tracker, attire menus, Nov 7, 2027 sizing roll-up.
-- 5 Guests + Seating: CSV import (mapping, dry run, dedupe), floor plan, printable list.
-- 6 Dashboard for real.
-- 7 Ship: production deploy and backups in place (backup/restore scripts already exist).
+Known gaps, by choice:
+- The guest import doesn't link attendants to guest rows (`WeddingPartyMember.guestId`).
+- Re-running `npm run seed` recreates seeded rows the couple deleted; production only runs
+  `seed --if-empty`.
+- The venue has no "also covers" set, so Catering shows as still needed until the couple ticks it.
 
 The user found long option lists overwhelming. Ask one question at a time, in plain language.
 
@@ -63,6 +61,25 @@ The user found long option lists overwhelming. Ask one question at a time, in pl
 - Read `node_modules/next/dist/docs/` before using a Next API you're unsure of (see AGENTS.md).
 - Server Components and Server Actions for data. No REST layer unless something needs it.
 
+## Conventions
+
+- **Data:** loaders live in `src/lib/data/*` and call `requireSession()`; pure math lives in
+  `src/lib/domain/*` with tests in `tests/`. `loadPlan()` is the per-request money pipeline;
+  `computePlan()` is the same without a session check, only for the calendar feed (secret token).
+- **Actions:** `src/app/(app)/<area>/actions.ts`. Parse with zod helpers from `src/lib/forms.ts`
+  (`zText`, `zMoney`, `zRequiredDate`, `zOptionalId`, …), return `ActionState`, and finish with
+  `revalidatePath("/", "layout")` so the dashboard and banner stay current.
+- **Forms:** `src/components/form` (`TextField`, `MoneyField`, `SelectField`, `SubmitButton`,
+  `ConfirmButton` for every delete). Pass `idPrefix` when a form appears twice on a page.
+  Enum labels and select options come from `src/lib/labels.ts`.
+- **Public routes:** only `/login`, `/api/login`, `/setup` (404s once auth is configured) and
+  `/api/calendar/<token>.ics` (checks its own token). Everything else goes through `proxy.ts`.
+- **Deploy:** Vercel runs `npm run vercel-build`, which on production only applies migrations
+  over the unpooled URL and runs `seed --if-empty` (`scripts/prepare-db.ts`). `/setup` walks the
+  couple through connecting Neon and setting `APP_PASSWORD_HASH` and `SESSION_SECRET`.
+- **Backups:** Settings → "Download a backup" (same format as `npm run backup`); the nightly
+  GitHub Action is opt-in (README).
+
 ## Rules that must not be broken
 
 1. **Derived, never stored.** Paid, remaining, committed, next-due, attire status, dress menu,
@@ -107,7 +124,6 @@ numbers, small uppercase tracked labels (`label-caps`), tabular numbers (`num`).
   cards on the ivory page (`Card`, `framed` for invitation-style cards), thin line icons drawn
   for this app (`Icon`), and thin server-rendered rings (`Ring` + `Legend`). Reuse these; keep
   ornaments to hero and empty-state cards so data pages stay calm.
-- Pages that aren't built yet show a read-only preview of real data plus a `ComingSoon` note.
 - Tokens live in `src/app/globals.css` (`@theme`). Tailwind's default palette is cleared.
   Chocolate #3E2B22 text · Cocoa #5C4033 · Ivory #F7F0E8 background · Paper #FFFCF8 surfaces ·
   Dusty Rose #D9A3A0 (primary accent) · Desert Rose #B5706B (secondary) · Gold #B8912F
