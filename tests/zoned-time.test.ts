@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cd } from "../src/lib/dates";
 import { instantToZoned, offsetMinutesAt, parseClock, zonedTimeToInstant } from "../src/lib/domain/zoned-time";
+import { APPOINTMENTS } from "../prisma/seed/data";
 
 // Runs in TZ=America/New_York, UTC and Pacific/Kiritimati (UTC+14). Nothing here may depend on
 // the machine's own zone.
@@ -144,5 +145,15 @@ describe("input checks", () => {
   it("refuses nonsense", () => {
     expect(() => zonedTimeToInstant(cd("2028-04-13"), "25:00")).toThrow();
     expect(() => zonedTimeToInstant("2027-02-29" as never, "10:00")).toThrow();
+  });
+});
+
+describe("seeded appointments", () => {
+  it("puts the venue's vendor preview at 6 PM New York time on Monday, Nov 16, 2026 (EST)", () => {
+    const a = APPOINTMENTS.find((x) => x.key === "event-venue-vendor-preview-2026-11")!;
+    const r = zonedTimeToInstant(a.date, a.time, NY);
+    expect(r.kind).toBe("exact");
+    expect(iso(r.instant)).toBe("2026-11-16T23:00:00.000Z");
+    expect(new Date(`${a.date}T12:00:00Z`).getUTCDay()).toBe(1);
   });
 });

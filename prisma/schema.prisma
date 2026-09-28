@@ -341,6 +341,7 @@ model CalendarEvent {
   vendor     Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   notes      String?
   isDemo     Boolean   @default(false)
+  seedKey    String?   @unique
   createdAt  DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
 

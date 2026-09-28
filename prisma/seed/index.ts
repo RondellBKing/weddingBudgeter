@@ -9,7 +9,9 @@ import "dotenv/config";
 import { randomBytes } from "node:crypto";
 import { toDbDate } from "../../src/lib/dates";
 import { createPrismaClient } from "../../src/lib/db-client";
+import { zonedTimeToInstant } from "../../src/lib/domain/zoned-time";
 import {
+  APPOINTMENTS,
   ATTIRE_OPTIONS,
   buildChecklist,
   CATEGORIES,
@@ -151,6 +153,22 @@ async function main() {
         });
       }
 
+      for (const a of APPOINTMENTS) {
+        await tx.calendarEvent.upsert({
+          where: { seedKey: a.key },
+          update: {},
+          create: {
+            seedKey: a.key,
+            title: a.title,
+            type: a.type,
+            startAt: zonedTimeToInstant(a.date, a.time, SETTINGS.timezone).instant,
+            location: a.atVenue ? `${SETTINGS.venueName}, ${SETTINGS.venueAddress}` : null,
+            vendorId: a.atVenue ? venue.id : null,
+            notes: a.notes ?? null,
+          },
+        });
+      }
+
       for (const t of buildChecklist()) {
         await tx.task.upsert({
           where: { seedKey: t.key },
@@ -175,15 +193,16 @@ async function main() {
     { timeout: 60_000 },
   );
 
-  const [categories, payments, tasks, party, options] = await Promise.all([
+  const [categories, payments, tasks, events, party, options] = await Promise.all([
     db.budgetCategory.count(),
     db.payment.count(),
     db.task.count(),
+    db.calendarEvent.count({ where: { isDemo: false } }),
     db.weddingPartyMember.count(),
     db.attireOption.count(),
   ]);
   console.log(
-    `Seeded: ${categories} budget categories, ${payments} payments, ${tasks} tasks, ` +
+    `Seeded: ${categories} budget categories, ${payments} payments, ${tasks} tasks, ${events} ${events === 1 ? "appointment" : "appointments"}, ` +
       `${party} wedding party members, ${options} attire options.`,
   );
 }

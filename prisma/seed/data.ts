@@ -112,6 +112,27 @@ export const VENUE_QUESTIONS: string[] = [
   "What does each vendor meal cost?",
 ];
 
+/** Appointments the couple has booked. Times are New York wall-clock times. */
+export const APPOINTMENTS: Array<{
+  key: string;
+  title: string;
+  type: "SITE_VISIT" | "MEETING" | "APPOINTMENT" | "TASTING" | "FITTING";
+  date: CalendarDate;
+  time: string;
+  notes?: string;
+  atVenue?: boolean;
+}> = [
+  {
+    key: "event-venue-vendor-preview-2026-11",
+    title: "Vendor preview at the venue",
+    type: "SITE_VISIT",
+    date: cd("2026-11-16"), // Monday
+    time: "18:00",
+    notes: "Also meeting a possible designer / day-of coordinator.",
+    atVenue: true,
+  },
+];
+
 export const WEDDING_PARTY: Array<{
   key: string;
   side: "BRIDE_SIDE" | "GROOM_SIDE";
