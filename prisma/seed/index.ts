@@ -1,4 +1,5 @@
-// Real seed: `npm run seed`.
+// Real seed: `npm run seed`. With `--if-empty` it does nothing once the wedding settings exist
+// (that's how production deploys call it, so a task you deleted never comes back).
 //
 // Safe to re-run. Every row is keyed by `seedKey` and upserted with an empty update, so running
 // it again never duplicates anything and never overwrites something you've edited in the app.
@@ -26,6 +27,10 @@ if (!url) throw new Error("DATABASE_URL is not set.");
 const db = createPrismaClient(url);
 
 async function main() {
+  if (process.argv.includes("--if-empty") && (await db.weddingSettings.findUnique({ where: { id: 1 } }))) {
+    console.log("Wedding data is already loaded; leaving it alone.");
+    return;
+  }
   await db.$transaction(
     async (tx) => {
       await tx.weddingSettings.upsert({

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/require-session";
+import { authConfigured } from "@/lib/auth/config";
 import { safeNextPath } from "@/lib/auth/request";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
@@ -14,6 +15,7 @@ const MESSAGES: Record<string, { text: string; tone: "error" | "info" }> = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  if (!authConfigured()) redirect("/setup");
   const params = await searchParams;
   const next = safeNextPath(typeof params.next === "string" ? params.next : "/");
 

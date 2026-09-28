@@ -11,7 +11,7 @@ import {
 // touch the database; requireSession() does the full check (including "log out everywhere")
 // inside every page, Server Action and route handler.
 
-const PUBLIC_PATHS = new Set(["/login", "/api/login"]);
+const PUBLIC_PATHS = new Set(["/login", "/api/login", "/setup"]);
 
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;

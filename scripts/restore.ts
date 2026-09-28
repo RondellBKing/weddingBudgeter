@@ -10,7 +10,7 @@
 import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import type pg from "pg";
-import { checksum, connect, dumpDatabase, latestMigration, tablesInDependencyOrder, type BackupFile } from "./lib/pg-dump";
+import { checksum, connect, dumpDatabase, latestMigration, tablesInDependencyOrder, type BackupFile } from "../src/lib/backup";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(name);

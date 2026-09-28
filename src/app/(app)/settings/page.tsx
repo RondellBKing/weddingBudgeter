@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { loadPlan } from "@/lib/data/plan";
@@ -44,6 +45,21 @@ export default async function SettingsPage() {
           vendorMealsCountTowardHeadcount: s.vendorMealsCountTowardHeadcount,
         }}
         />
+      </Card>
+
+      <Card className="grid gap-4 p-6 sm:p-8" aria-labelledby="backup-h">
+        <h2 id="backup-h" className="text-2xl">
+          Keep a <em className="italic">copy</em>
+        </h2>
+        <p className="max-w-prose text-sm leading-relaxed text-cocoa">
+          Download everything in the planner as one file. Do it every few weeks, and before any big change, and save it
+          somewhere safe like Google Drive or iCloud. If anything ever goes wrong, this file brings it all back.
+        </p>
+        <div>
+          <a href="/settings/backup" className={buttonClass("secondary")}>
+            Download a backup
+          </a>
+        </div>
       </Card>
 
       <Card className="grid gap-5 p-6 sm:p-8" aria-labelledby="signin-h">

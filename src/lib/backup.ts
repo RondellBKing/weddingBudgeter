@@ -1,5 +1,6 @@
-// Plain-Postgres helpers shared by backup and restore. No Prisma here: the dump is every column
-// of every table, exactly as Postgres stores it, so it restores faithfully even across app changes.
+// Plain-Postgres backup helpers, shared by the backup/restore scripts and the Settings download.
+// No Prisma here: the dump is every column of every table, exactly as Postgres stores it, so it
+// restores faithfully even across app changes.
 
 import { createHash } from "node:crypto";
 import pg from "pg";

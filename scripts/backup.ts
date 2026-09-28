@@ -5,7 +5,7 @@
 import "dotenv/config";
 import { chmod, mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { connect, dumpDatabase } from "./lib/pg-dump";
+import { connect, dumpDatabase } from "../src/lib/backup";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(name);
