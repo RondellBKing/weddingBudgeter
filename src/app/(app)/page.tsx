@@ -182,9 +182,14 @@ export default async function DashboardPage() {
               </span>
             </div>
             <ToneBadge tone={d.sizing.tone}>
-              {d.sizing.notSubmitted === 0
-                ? "Everyone has sent sizing"
-                : `${d.sizing.notSubmitted} of ${d.sizing.dressWearers} sizes outstanding`}
+              {d.sizing.allIn
+                ? "Every style and size is in"
+                : [
+                    d.sizing.notSubmitted > 0 ? `${d.sizing.notSubmitted} of ${d.sizing.dressWearers} dresses outstanding` : null,
+                    d.sizing.suitsOutstanding > 0 ? `${d.sizing.suitsOutstanding} suit measurements` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
             </ToneBadge>
           </Card>
         </div>
