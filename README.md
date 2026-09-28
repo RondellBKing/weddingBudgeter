@@ -49,26 +49,36 @@ then use **Settings → Log out everywhere**.
 
 ## Put it online (Vercel + Neon)
 
-1. In Vercel, import this GitHub repository as a new project (framework: Next.js).
-2. In the project, open **Storage → Marketplace → Neon** and create a free database. This adds
-   `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` to the project.
-3. Add environment variables in **Settings → Environment Variables** (Production only):
-   `APP_PASSWORD_HASH` and `SESSION_SECRET`.
-4. Create the tables and load the data once, from your computer, using the **unpooled** URL:
-   ```bash
-   DATABASE_URL="<DATABASE_URL_UNPOOLED from Vercel>" npx prisma migrate deploy
-   DATABASE_URL="<DATABASE_URL_UNPOOLED from Vercel>" npm run seed
-   ```
-5. Deploy. Sign in with your passphrase.
+No command line needed. Everything happens in the browser.
 
-Future schema changes: take a backup, then run `npx prisma migrate deploy` against production
-the same way before deploying the new code.
+1. **Make this GitHub repository private** (GitHub → the repository → Settings → General →
+   Danger Zone → Change visibility). The code holds your names, date, venue and budget figures.
+2. **Create the Vercel project.** Sign in at vercel.com with GitHub (the free Hobby plan is
+   enough), choose **Add New → Project**, import this repository and click **Deploy**. The
+   first deploy finishes without a database; that's expected.
+3. **Open the new site.** It shows a one-time setup checklist and walks you through the rest:
+   - **Connect the database:** in the Vercel project, **Storage → Neon** (free) → create and
+     connect it, then **Deployments → Redeploy**. The redeploy creates the tables and loads the
+     wedding details (only when the database is empty).
+   - **Choose your passphrase:** the setup page turns it into two values. Add both in
+     **Settings → Environment Variables** (Production), then **Redeploy** once more.
+   - **Sign in** with the passphrase.
 
-Preview deployments should use a Neon **branch**, never the production database.
+After that, every push to the repository's main branch redeploys automatically, and schema
+changes are applied during the deploy (`npm run vercel-build` runs `scripts/prepare-db.ts`).
+Preview deployments never touch the production database.
+
+To change the passphrase later: in Vercel, delete `APP_PASSWORD_HASH` and `SESSION_SECRET` and
+redeploy. The setup page comes back and makes new values; add them and redeploy. The new
+session secret also signs out every device. (From a computer, `npm run hash-password` makes a
+new hash too.)
 
 ## Backups
 
-**Take one now:** `npm run backup` writes `backups/wedding-hq-<timestamp>.json` (every table
+**Easiest:** in the app, **Settings → Download a backup**. Save the file somewhere safe (Google
+Drive, iCloud). Do it every few weeks and before big changes.
+
+**From a computer:** `npm run backup` writes `backups/wedding-hq-<timestamp>.json` (every table
 except login attempts, read in one consistent snapshot). The `backups/` folder is ignored by
 git. Point `DATABASE_URL` at production to back up production.
 
