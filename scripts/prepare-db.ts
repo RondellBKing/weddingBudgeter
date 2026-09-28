@@ -15,8 +15,10 @@ if (!production) {
 
 const direct = process.env.DATABASE_URL_UNPOOLED || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL;
 if (!direct) {
-  console.error("prepare-db: no DATABASE_URL. Connect the Neon database to this Vercel project first.");
-  process.exit(1);
+  // First deploy before a database is attached: let the site build so the setup screen can
+  // explain the next step. The app shows setup until the database is connected.
+  console.warn("prepare-db: no DATABASE_URL yet. Connect the Neon database, then redeploy.");
+  process.exit(0);
 }
 
 function run(cmd: string, args: string[]) {
