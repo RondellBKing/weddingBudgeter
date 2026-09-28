@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wedding
+          POSTGRES_PASSWORD: wedding
+          POSTGRES_DB: wedding_hq
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wedding"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://wedding:wedding@localhost:5432/wedding_hq
+      RESTORE_DATABASE_URL: postgresql://wedding:wedding@localhost:5432/wedding_hq_restore
+      SESSION_SECRET: ci-only-session-secret-not-used-anywhere-real
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Create the restore-check database
+        run: PGPASSWORD=wedding psql -h localhost -U wedding -d wedding_hq -c "CREATE DATABASE wedding_hq_restore"
+      - name: Migrate both databases
+        run: |
+          npx prisma migrate deploy
+          DATABASE_URL="$RESTORE_DATABASE_URL" npx prisma migrate deploy
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Tests (New York, UTC and UTC+14)
+        run: npm test
+      - run: npm run build
+      - name: Seed twice (must not duplicate)
+        run: npm run seed && npm run seed
+      - name: Backup and restore round trip
+        run: |
+          npm run seed:demo
+          npm run backup -- --out ci-backup.json
+          npm run restore -- ci-backup.json --verify

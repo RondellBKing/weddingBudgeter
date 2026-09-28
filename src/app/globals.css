@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/*
+  Wedding HQ design tokens. Warm only: chocolate, rose, gold, ivory, garden green.
+  Tailwind's default palette is cleared so no cool grey or blue can sneak in.
+
+  Contrast on Ivory (WCAG AA needs 4.5:1 for body text):
+    chocolate 11.8 · cocoa 8.3 · brick 6.0 · muted 4.85 → safe for text
+    garden 4.1 · desert-rose 3.4 · gold 2.6 · dusty-rose 1.9 → fills only; use the *-ink variants for text
+*/
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-chocolate: #3e2b22; /* primary text */
+  --color-cocoa: #5c4033; /* secondary text */
+  --color-muted: #7a6558; /* labels, 4.85:1 on ivory */
+  --color-ivory: #f7f0e8; /* page background */
+  --color-paper: #fffcf8; /* surfaces */
+  --color-linen: #efe3d8; /* meter tracks, subtle fills */
+  --color-rule: #e4d8cc; /* hairlines */
+  --color-rule-strong: #cdbcae;
+
+  --color-dusty-rose: #d9a3a0; /* bridesmaids; primary accent (fills only) */
+  --color-desert-rose: #b5706b; /* honor attendants; secondary accent (fills only) */
+  --color-rose-ink: #a15651; /* rose for text, 4.7:1 */
+  --color-gold: #b8912f; /* yellow gold, sparingly (fills only) */
+  --color-gold-ink: #836722; /* gold for text, 4.7:1 */
+  --color-garden: #6b7a5a; /* on track (fills) */
+  --color-garden-ink: #637154; /* on track (text), 4.6:1 */
+  --color-brick: #9c3b2e; /* overdue / over budget */
+  --color-brick-wash: #f3e1dc;
+
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Garamond, "Times New Roman", serif;
+  --font-sans: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-ivory);
+    color: var(--color-chocolate);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-desert-rose);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-dusty-rose);
+    color: var(--color-chocolate);
+  }
+}
+
+/* Small uppercase label with wide tracking. */
+@utility label-caps {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Aligned money columns. */
+@utility num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

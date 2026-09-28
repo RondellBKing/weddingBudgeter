@@ -1,0 +1,576 @@
+// Wedding HQ schema.
+//
+// House rules (see CLAUDE.md):
+// - Money is integer cents (Int). Never floats.
+// - Calendar dates (due dates, paid dates, deadlines) are Postgres `date` (@db.Date), read and
+//   written through src/lib/dates.ts so they never shift a day.
+// - Real instants (createdAt, appointments) are timestamptz.
+// - Anything derivable is derived. No paid / remaining / status-of-a-sum columns.
+// - `seedKey` marks rows created by the real seed so re-running it never duplicates or overwrites.
+// - `isDemo` marks demo rows so they can be wiped in one step.
+// Extra constraints that Prisma can't express live in the migration SQL (CHECKs, partial indexes).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Settings & auth ───────────────────────────────────────────────────────────
+
+/// Exactly one row (id = 1, enforced by a CHECK constraint).
+model WeddingSettings {
+  id                              Int      @id @default(1)
+  partnerOneName                  String
+  partnerTwoName                  String
+  weddingDate                     DateTime @db.Date
+  /// Wedding-day local time, "HH:MM".
+  ceremonyTime                    String?
+  timezone                        String   @default("America/New_York")
+  venueName                       String
+  venueAddress                    String
+  /// Earliest vendor/setup arrival on the wedding day, "HH:MM".
+  venueAccessTime                 String   @default("06:00")
+  /// Planned number of people eating, including the couple and wedding party.
+  /// Used until a guest list exists.
+  headcountTarget                 Int      @default(125)
+  totalBudgetCents                Int
+  includedHeadcount               Int      @default(125)
+  perPersonOverageCents           Int      @default(20000)
+  /// Tax/service applied to the headcount overage, in parts per million (6.625% = 66250).
+  overageTaxPpm                   Int      @default(0)
+  /// Conservative default until the venue confirms.
+  vendorMealsCountTowardHeadcount Boolean  @default(true)
+  dressSizingDeadline             DateTime @db.Date
+  heroImageUrl                    String?
+  createdAt                       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt                       DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// Exactly one row. Bumping sessionEpoch signs out every device.
+model AuthState {
+  id           Int      @id @default(1)
+  sessionEpoch Int      @default(1)
+  /// Secret path segment for the calendar subscription feed (Phase 3).
+  icsToken     String
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model LoginAttempt {
+  id Int      @id @default(autoincrement())
+  ip String
+  ok Boolean
+  at DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([at])
+  @@index([ip, at])
+}
+
+// ─── Money ─────────────────────────────────────────────────────────────────────
+
+model BudgetCategory {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  estimateCents Int
+  sortOrder     Int
+  /// Exactly one category is the contingency buffer (partial unique index).
+  isContingency Boolean      @default(false)
+  /// Closed categories return their unspent estimate to the contingency.
+  isClosed      Boolean      @default(false)
+  notes         String?
+  seedKey       String?      @unique
+  items         BudgetItem[]
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(3)
+}
+
+model BudgetItem {
+  id              String         @id @default(cuid())
+  categoryId      String
+  category        BudgetCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  vendorId        String?
+  vendor          Vendor?        @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  description     String
+  estimateCents   Int?
+  contractedCents Int?
+  notes           String?
+  isDemo          Boolean        @default(false)
+  seedKey         String?        @unique
+  payments        Payment[]
+  decisions       Decision[]
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([categoryId])
+  @@index([vendorId])
+}
+
+/// The spine of the app: paid, remaining and next-due are always derived from these rows.
+model Payment {
+  id           String         @id @default(cuid())
+  budgetItemId String
+  budgetItem   BudgetItem     @relation(fields: [budgetItemId], references: [id], onDelete: Restrict)
+  /// Display order within the item ("2 of 6").
+  sequence     Int?
+  kind         PaymentKind
+  /// Null means the amount isn't known yet (or is computed by amountRule until paid).
+  amountCents  Int?
+  amountRule   AmountRule?
+  isEstimate   Boolean        @default(false)
+  dueDate      DateTime       @db.Date
+  paidDate     DateTime?      @db.Date
+  method       PaymentMethod?
+  reference    String?
+  notes        String?
+  isDemo       Boolean        @default(false)
+  seedKey      String?        @unique
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([budgetItemId])
+  @@index([dueDate])
+}
+
+enum PaymentKind {
+  DEPOSIT
+  INSTALLMENT
+  FINAL
+  OVERAGE
+  /// Mandatory service charge (e.g. the maître d' fee). Never counted again as a tip.
+  SERVICE_CHARGE
+  /// Discretionary tip.
+  GRATUITY
+  OTHER
+}
+
+enum AmountRule {
+  /// (headcount − includedHeadcount) × perPersonOverageCents, plus overageTaxPpm.
+  HEADCOUNT_OVERAGE
+}
+
+enum PaymentMethod {
+  CHECK
+  CARD
+  ACH
+  WIRE
+  ZELLE
+  CASH
+  OTHER
+}
+
+// ─── Vendors ───────────────────────────────────────────────────────────────────
+
+model Vendor {
+  id               String           @id @default(cuid())
+  name             String
+  category         VendorCategory
+  /// Other categories this vendor covers (an all-inclusive venue may cover CATERING).
+  alsoCovers       VendorCategory[] @default([])
+  status           VendorStatus     @default(RESEARCHING)
+  contactName      String?
+  email            String?
+  phone            String?
+  website          String?
+  instagram        String?
+  /// Quote before booking. The contracted amount is derived from the vendor's budget items.
+  quotedCents      Int?
+  contractSignedOn DateTime?        @db.Date
+  contractUrl      String?
+  /// Wedding-day arrival, "HH:MM".
+  arrivalTime      String?
+  mealsRequired    Int              @default(0)
+  notes            String?
+  isDemo           Boolean          @default(false)
+  seedKey          String?          @unique
+  budgetItems      BudgetItem[]
+  tasks            Task[]
+  events           CalendarEvent[]
+  questions        VendorQuestion[]
+  log              VendorNote[]
+  decisions        Decision[]
+  createdAt        DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime         @updatedAt @db.Timestamptz(3)
+
+  @@index([category])
+  @@index([status])
+}
+
+enum VendorCategory {
+  VENUE
+  CATERING
+  PHOTOGRAPHY
+  VIDEOGRAPHY
+  FLORAL
+  MUSIC_DJ
+  MUSIC_CEREMONY
+  CAKE
+  ATTIRE
+  BEAUTY
+  STATIONERY
+  RENTALS
+  TRANSPORT
+  OFFICIANT
+  LODGING
+  OTHER
+}
+
+enum VendorStatus {
+  RESEARCHING
+  CONTACTED
+  QUOTED
+  BOOKED
+  DECLINED
+  CANCELLED
+}
+
+/// "Questions to ask" checklist per vendor.
+model VendorQuestion {
+  id         String    @id @default(cuid())
+  vendorId   String
+  vendor     Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  text       String
+  answer     String?
+  answeredOn DateTime? @db.Date
+  sortOrder  Int       @default(0)
+  seedKey    String?   @unique
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([vendorId])
+}
+
+/// Timestamped communication log per vendor.
+model VendorNote {
+  id        String   @id @default(cuid())
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  at        DateTime @default(now()) @db.Timestamptz(3)
+  author    Partner
+  body      String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([vendorId, at])
+}
+
+// ─── Tasks & calendar ──────────────────────────────────────────────────────────
+
+model Task {
+  id            String              @id @default(cuid())
+  title         String
+  notes         String?
+  dueDate       DateTime?           @db.Date
+  owner         Owner               @default(BOTH)
+  status        TaskStatus          @default(NOT_STARTED)
+  priority      Priority            @default(MEDIUM)
+  area          TaskArea            @default(PLANNING)
+  vendorId      String?
+  vendor        Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  /// Set for wedding-party duties.
+  partyMemberId String?
+  partyMember   WeddingPartyMember? @relation(fields: [partyMemberId], references: [id], onDelete: SetNull)
+  isMilestone   Boolean             @default(false)
+  /// Set exactly when status is DONE (CHECK constraint).
+  completedAt   DateTime?           @db.Timestamptz(3)
+  isDemo        Boolean             @default(false)
+  seedKey       String?             @unique
+  createdAt     DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime            @updatedAt @db.Timestamptz(3)
+
+  @@index([dueDate])
+  @@index([status])
+}
+
+enum Owner {
+  RONDELL
+  CAPRI
+  BOTH
+  VENDOR
+  WEDDING_PARTY
+}
+
+enum Partner {
+  RONDELL
+  CAPRI
+  BOTH
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskArea {
+  PLANNING
+  BUDGET
+  VENUE
+  VENDORS
+  ATTIRE
+  WEDDING_PARTY
+  GUESTS
+  STATIONERY
+  CEREMONY
+  RECEPTION
+  BEAUTY
+  TRAVEL
+  LEGAL
+  DAY_OF
+  OTHER
+}
+
+/// Either a timed event (startAt/endAt) or an all-day event (allDayDate). Never both (CHECK).
+model CalendarEvent {
+  id         String    @id @default(cuid())
+  title      String
+  type       EventType
+  startAt    DateTime? @db.Timestamptz(3)
+  endAt      DateTime? @db.Timestamptz(3)
+  allDayDate DateTime? @db.Date
+  location   String?
+  vendorId   String?
+  vendor     Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  notes      String?
+  isDemo     Boolean   @default(false)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([startAt])
+  @@index([allDayDate])
+}
+
+enum EventType {
+  TASTING
+  FITTING
+  MEETING
+  SITE_VISIT
+  APPOINTMENT
+  DEADLINE
+  OTHER
+}
+
+// ─── Wedding party ─────────────────────────────────────────────────────────────
+
+model WeddingPartyMember {
+  id                   String        @id @default(cuid())
+  /// Blank until we fill it in; the UI shows "Bridesmaid 1" etc.
+  name                 String?
+  side                 PartySide
+  role                 PartyRole
+  /// Drives the attire flow (the bridesman wears a suit on the bride's side).
+  outfitType           OutfitType
+  sortOrder            Int
+  email                String?
+  phone                String?
+  /// Link to their guest row so they're seated and counted (Phase 5).
+  guestId              String?       @unique
+  guest                Guest?        @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  askedOn              DateTime?     @db.Date
+  acceptedOn           DateTime?     @db.Date
+  /// Dress style. Its menu must match the member's role (A bridesmaids, B honor attendants).
+  chosenStyleId        String?
+  chosenStyle          AttireOption? @relation("ChosenStyle", fields: [chosenStyleId], references: [id], onDelete: SetNull)
+  // Attire progress. The status shown in the app is derived from the latest step with a date.
+  sizingSubmittedOn    DateTime?     @db.Date
+  orderedOn            DateTime?     @db.Date
+  arrivedOn            DateTime?     @db.Date
+  alteredOn            DateTime?     @db.Date
+  readyOn              DateTime?     @db.Date
+  sizes                Json?
+  /// Suit wearers: rental paid. (Dress costs are tracked outside this app.)
+  attirePaid           Boolean       @default(false)
+  shoeOptionId         String?
+  shoeOption           AttireOption? @relation("ShoeOption", fields: [shoeOptionId], references: [id], onDelete: SetNull)
+  /// Already-owned shoes submitted for approval.
+  shoeOwnedDescription String?
+  shoeStatus           ShoeStatus    @default(NOT_SELECTED)
+  hairPlan             String?
+  accessoriesConfirmed Boolean       @default(false)
+  giftIdea             String?
+  giftPurchased        Boolean       @default(false)
+  lodgingBooked        Boolean       @default(false)
+  notes                String?
+  seedKey              String?       @unique
+  duties               Task[]
+  createdAt            DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @db.Timestamptz(3)
+}
+
+enum PartySide {
+  BRIDE_SIDE
+  GROOM_SIDE
+}
+
+enum PartyRole {
+  BEST_MAN
+  MAID_OF_HONOR
+  MATRON_OF_HONOR
+  GROOMSMAN
+  BRIDESMAID
+  BRIDESMAN
+  OTHER
+}
+
+enum OutfitType {
+  DRESS
+  SUIT
+}
+
+enum ShoeStatus {
+  NOT_SELECTED
+  SELECTED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+/// Reference data for the dress and shoe menus.
+model AttireOption {
+  id          String               @id @default(cuid())
+  menu        AttireMenu
+  name        String
+  description String
+  color       String
+  active      Boolean              @default(true)
+  sortOrder   Int                  @default(0)
+  seedKey     String?              @unique
+  chosenBy    WeddingPartyMember[] @relation("ChosenStyle")
+  shoesFor    WeddingPartyMember[] @relation("ShoeOption")
+  createdAt   DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime             @updatedAt @db.Timestamptz(3)
+
+  @@unique([menu, name])
+}
+
+enum AttireMenu {
+  A
+  B
+  SHOES
+}
+
+// ─── Guests & seating ──────────────────────────────────────────────────────────
+
+model Guest {
+  id             String              @id @default(cuid())
+  fullName       String
+  householdName  String
+  side           GuestSide
+  relationship   Relationship        @default(OTHER)
+  isChild        Boolean             @default(false)
+  plusOneOfId    String?
+  plusOneOf      Guest?              @relation("PlusOne", fields: [plusOneOfId], references: [id], onDelete: SetNull)
+  plusOnes       Guest[]             @relation("PlusOne")
+  /// Imported from the RSVP app. Null means we don't know yet.
+  rsvpStatus     RsvpStatus?
+  mealChoice     String?
+  dietaryNotes   String?
+  notes          String?
+  /// The RSVP app's own guest ID, when its export has one. Preferred match key on re-import.
+  externalId     String?             @unique
+  /// Normalized name + household, the fallback match key on re-import.
+  matchKey       String
+  lastImportedAt DateTime?           @db.Timestamptz(3)
+  isDemo         Boolean             @default(false)
+  seat           SeatAssignment?
+  partyMember    WeddingPartyMember?
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @db.Timestamptz(3)
+
+  @@index([matchKey])
+  @@index([householdName])
+}
+
+enum GuestSide {
+  BRIDE_SIDE
+  GROOM_SIDE
+  BOTH
+}
+
+/// Who the guest is to us. Children and plus-ones are flags, not relationships.
+enum Relationship {
+  COUPLE
+  FAMILY
+  FRIEND
+  WORK
+  OTHER
+}
+
+enum RsvpStatus {
+  PENDING
+  ATTENDING
+  DECLINED
+}
+
+/// Remembers the last column mapping so re-imports take two clicks.
+model GuestImport {
+  id       String   @id @default(cuid())
+  at       DateTime @default(now()) @db.Timestamptz(3)
+  fileName String?
+  mapping  Json
+  summary  Json
+}
+
+model SeatingTable {
+  id          String           @id @default(cuid())
+  label       String
+  shape       TableShape       @default(ROUND)
+  capacity    Int
+  x           Float            @default(0)
+  y           Float            @default(0)
+  rotation    Int              @default(0)
+  sortOrder   Int              @default(0)
+  isDemo      Boolean          @default(false)
+  assignments SeatAssignment[]
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @db.Timestamptz(3)
+}
+
+enum TableShape {
+  ROUND
+  RECTANGLE
+  SWEETHEART
+  HEAD_TABLE
+}
+
+/// A guest sits at no more than one table (unique guestId).
+model SeatAssignment {
+  id         String       @id @default(cuid())
+  guestId    String       @unique
+  guest      Guest        @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  tableId    String
+  table      SeatingTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  seatNumber Int?
+  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime     @updatedAt @db.Timestamptz(3)
+
+  @@unique([tableId, seatNumber])
+  @@index([tableId])
+}
+
+// ─── Decision log ──────────────────────────────────────────────────────────────
+
+model Decision {
+  id           String      @id @default(cuid())
+  decidedOn    DateTime    @db.Date
+  title        String
+  decision     String
+  rationale    String?
+  decidedBy    Partner
+  vendorId     String?
+  vendor       Vendor?     @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  budgetItemId String?
+  budgetItem   BudgetItem? @relation(fields: [budgetItemId], references: [id], onDelete: SetNull)
+  isDemo       Boolean     @default(false)
+  seedKey      String?     @unique
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime    @updatedAt @db.Timestamptz(3)
+}

@@ -1,0 +1,64 @@
+# Nightly encrypted backup of the production database to a separate private repository.
+# Does nothing until these are set in this repo's Settings → Secrets and variables → Actions:
+#   secret   PROD_DATABASE_URL      Neon connection string (the direct, non-pooled one is best)
+#   secret   BACKUP_AGE_RECIPIENT   public key from `age-keygen` (starts with "age1")
+#   secret   BACKUP_REPO_TOKEN      fine-grained token with Contents: read & write on the backup repo only
+#   variable BACKUP_REPO            e.g. rondellbking/wedding-hq-backups
+# See README → Backups.
+
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: "17 7 * * *" # 3:17 am New York time in summer, 2:17 am in winter
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+      AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+      BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+      BACKUP_REPO: ${{ vars.BACKUP_REPO }}
+    steps:
+      - name: Check configuration
+        id: cfg
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$AGE_RECIPIENT" ] || [ -z "$BACKUP_REPO_TOKEN" ] || [ -z "$BACKUP_REPO" ]; then
+            echo "::notice::Backups aren't configured yet. See README → Backups."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.cfg.outputs.ready == 'true'
+        uses: actions/checkout@v5
+      - if: steps.cfg.outputs.ready == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.cfg.outputs.ready == 'true'
+        run: npm ci
+      - name: Dump the database
+        if: steps.cfg.outputs.ready == 'true'
+        run: npm run backup -- --out backup.json
+      - name: Encrypt and store
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          sudo apt-get install -y -qq age
+          STAMP=$(date -u +%Y-%m-%dT%H%M%SZ)
+          age -r "$AGE_RECIPIENT" -o "wedding-hq-$STAMP.json.age" backup.json
+          rm backup.json
+          git clone --depth 1 "https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/${BACKUP_REPO}.git" store
+          mkdir -p "store/$(date -u +%Y/%m)"
+          mv "wedding-hq-$STAMP.json.age" "store/$(date -u +%Y/%m)/"
+          cd store
+          git config user.name "wedding-hq-backup"
+          git config user.email "wedding-hq-backup@users.noreply.github.com"
+          git add -A
+          git commit -m "Backup $STAMP"
+          git push
