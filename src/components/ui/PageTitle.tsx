@@ -6,19 +6,25 @@ export function PageTitle({
   lead = "Our",
   eyebrow,
   intro,
+  actions,
 }: {
   word: string;
   lead?: string;
   eyebrow?: string;
   intro?: ReactNode;
+  /** Buttons or links shown beside the title on wide screens, under it on phones. */
+  actions?: ReactNode;
 }) {
   return (
-    <header className="grid gap-3">
-      {eyebrow ? <p className="label-caps text-rose-ink">{eyebrow}</p> : null}
-      <h1 className="text-[42px] leading-[1.02] tracking-[-0.01em] sm:text-[56px] lg:text-[64px]">
-        {lead} <em className="italic">{word}</em>
-      </h1>
-      {intro ? <p className="max-w-2xl text-[15px] leading-relaxed text-cocoa">{intro}</p> : null}
+    <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+      <div className="grid min-w-0 gap-3">
+        {eyebrow ? <p className="label-caps text-rose-ink">{eyebrow}</p> : null}
+        <h1 className="text-[42px] leading-[1.02] tracking-[-0.01em] sm:text-[56px] lg:text-[64px]">
+          {lead} <em className="italic">{word}</em>
+        </h1>
+        {intro ? <p className="max-w-2xl text-[15px] leading-relaxed text-cocoa">{intro}</p> : null}
+      </div>
+      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
     </header>
   );
 }
