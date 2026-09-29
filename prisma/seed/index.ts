@@ -16,6 +16,7 @@ import {
   buildChecklist,
   CATEGORIES,
   DECISIONS,
+  PALETTE,
   SETTINGS,
   VENUE,
   VENUE_ITEM,
@@ -150,6 +151,14 @@ async function main() {
             decidedBy: "BOTH",
             vendorId: d.linkVenue ? venue.id : null,
           },
+        });
+      }
+
+      for (const [i, c] of PALETTE.entries()) {
+        await tx.paletteColor.upsert({
+          where: { seedKey: c.key },
+          update: {},
+          create: { seedKey: c.key, name: c.name, hex: c.hex, usage: c.usage, sortOrder: i },
         });
       }
 

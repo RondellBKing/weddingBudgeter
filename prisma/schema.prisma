@@ -46,6 +46,8 @@ model WeddingSettings {
   vendorMealsCountTowardHeadcount Boolean  @default(true)
   dressSizingDeadline             DateTime @db.Date
   heroImageUrl                    String?
+  /// What happens if it rains: where the ceremony moves, who decides, by when.
+  rainPlan                        String?
   createdAt                       DateTime @default(now()) @db.Timestamptz(3)
   updatedAt                       DateTime @updatedAt @db.Timestamptz(3)
 }
@@ -101,6 +103,7 @@ model BudgetItem {
   seedKey         String?        @unique
   payments        Payment[]
   decisions       Decision[]
+  decorItems      DecorItem[]
   createdAt       DateTime       @default(now()) @db.Timestamptz(3)
   updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
 
@@ -191,6 +194,10 @@ model Vendor {
   questions        VendorQuestion[]
   log              VendorNote[]
   decisions        Decision[]
+  timelineItems    TimelineItem[]
+  decorItems       DecorItem[]
+  hotelBlocks      HotelBlock[]
+  shuttleRuns      ShuttleRun[]
   createdAt        DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime         @updatedAt @db.Timestamptz(3)
 
@@ -483,6 +490,7 @@ model Guest {
   isDemo         Boolean             @default(false)
   seat           SeatAssignment?
   partyMember    WeddingPartyMember?
+  gifts          Gift[]
   createdAt      DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime            @updatedAt @db.Timestamptz(3)
 
@@ -574,4 +582,260 @@ model Decision {
   seedKey      String?     @unique
   createdAt    DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime    @updatedAt @db.Timestamptz(3)
+}
+
+// ─── Wedding day: run of show ─────────────────────────────────────────────────
+
+/// One line of the run of show for the rehearsal day, the wedding day or the day after.
+/// Times are "HH:MM" wall-clock strings in the wedding's time zone, never instants.
+model TimelineItem {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  startTime String
+  endTime   String?
+  title     String
+  location  String?
+  /// Who runs this moment: a name or a role ("Coordinator", "DJ").
+  lead      String?
+  /// Who needs to be there ("Wedding party, parents").
+  involves  String?
+  vendorId  String?
+  vendor    Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  notes     String?
+  isDemo    Boolean  @default(false)
+  seedKey   String?  @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([date, startTime])
+}
+
+// ─── Wedding day: music ───────────────────────────────────────────────────────
+
+model SongRequest {
+  id        String      @id @default(cuid())
+  moment    MusicMoment
+  title     String
+  artist    String?
+  notes     String?
+  sortOrder Int         @default(0)
+  isDemo    Boolean     @default(false)
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@index([moment, sortOrder])
+}
+
+enum MusicMoment {
+  PRELUDE
+  PROCESSIONAL
+  COUPLE_ENTRANCE
+  RECESSIONAL
+  COCKTAIL_HOUR
+  GRAND_ENTRANCE
+  FIRST_DANCE
+  PARENT_DANCE
+  CAKE_CUTTING
+  LAST_DANCE
+  SEND_OFF
+  MUST_PLAY
+  DO_NOT_PLAY
+}
+
+/// Who walks down the aisle, in order.
+model ProcessionalEntry {
+  id        String   @id @default(cuid())
+  sortOrder Int      @default(0)
+  /// Who walks together ("Best man with maid of honor").
+  walkers   String
+  notes     String?
+  isDemo    Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+// ─── Wedding day: photos ──────────────────────────────────────────────────────
+
+model ShotListItem {
+  id          String     @id @default(cuid())
+  moment      ShotMoment
+  description String
+  /// Everyone in the photo, so the photographer's assistant can gather them.
+  people      String?
+  isMustHave  Boolean    @default(false)
+  sortOrder   Int        @default(0)
+  isDemo      Boolean    @default(false)
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@index([moment, sortOrder])
+}
+
+enum ShotMoment {
+  DETAILS
+  GETTING_READY
+  FIRST_LOOK
+  CEREMONY
+  FAMILY
+  WEDDING_PARTY
+  COUPLE
+  COCKTAIL_HOUR
+  RECEPTION
+  OTHER
+}
+
+// ─── Design ───────────────────────────────────────────────────────────────────
+
+/// Inspiration: a link to a picture or a page, grouped by area.
+model InspirationItem {
+  id         String     @id @default(cuid())
+  area       DesignArea
+  title      String?
+  /// Direct link to an image, shown on the board.
+  imageUrl   String?
+  /// Where it came from (Pinterest, Instagram, a vendor's site).
+  sourceUrl  String?
+  notes      String?
+  isFavorite Boolean    @default(false)
+  sortOrder  Int        @default(0)
+  isDemo     Boolean    @default(false)
+  createdAt  DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@index([area, sortOrder])
+}
+
+enum DesignArea {
+  OVERALL
+  CEREMONY
+  COCKTAIL_HOUR
+  RECEPTION
+  FLOWERS
+  TABLESCAPE
+  LIGHTING
+  CAKE
+  STATIONERY
+  ATTIRE
+  WELCOME
+  OTHER
+}
+
+model PaletteColor {
+  id        String   @id @default(cuid())
+  name      String
+  /// "#RRGGBB"
+  hex       String
+  /// Where it's used ("Menu A dresses", "Metals").
+  usage     String?
+  sortOrder Int      @default(0)
+  isDemo    Boolean  @default(false)
+  seedKey   String?  @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// Décor, rentals and everything that has to arrive at the venue. Status comes from the dates.
+model DecorItem {
+  id           String      @id @default(cuid())
+  name         String
+  area         DesignArea
+  quantity     Int         @default(1)
+  source       DecorSource
+  vendorId     String?
+  vendor       Vendor?     @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  /// The money lives on the budget item and its payments, never here.
+  budgetItemId String?
+  budgetItem   BudgetItem? @relation(fields: [budgetItemId], references: [id], onDelete: SetNull)
+  orderedOn    DateTime?   @db.Date
+  receivedOn   DateTime?   @db.Date
+  /// Rentals and borrowed pieces: when they have to go back.
+  returnBy     DateTime?   @db.Date
+  returnedOn   DateTime?   @db.Date
+  notes        String?
+  sortOrder    Int         @default(0)
+  isDemo       Boolean     @default(false)
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@index([area, sortOrder])
+}
+
+enum DecorSource {
+  VENUE
+  VENDOR
+  RENTAL
+  PURCHASE
+  DIY
+  BORROWED
+}
+
+// ─── Guest care ───────────────────────────────────────────────────────────────
+
+model HotelBlock {
+  id               String    @id @default(cuid())
+  name             String
+  address          String?
+  phone            String?
+  bookingUrl       String?
+  groupCode        String?
+  roomsHeld        Int?
+  nightlyRateCents Int?
+  /// Last day guests can book at the group rate.
+  cutoffDate       DateTime? @db.Date
+  checkIn          DateTime? @db.Date
+  checkOut         DateTime? @db.Date
+  vendorId         String?
+  vendor           Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  notes            String?
+  isDemo           Boolean   @default(false)
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
+}
+
+/// A shuttle or car run. Times are "HH:MM" wall-clock strings in the wedding's time zone.
+model ShuttleRun {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  departTime String
+  fromPlace  String
+  toPlace    String
+  seats      Int?
+  vendorId   String?
+  vendor     Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  notes      String?
+  isDemo     Boolean  @default(false)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([date, departTime])
+}
+
+model WelcomeBagItem {
+  id         String    @id @default(cuid())
+  name       String
+  perBag     Int       @default(1)
+  orderedOn  DateTime? @db.Date
+  receivedOn DateTime? @db.Date
+  notes      String?
+  sortOrder  Int       @default(0)
+  isDemo     Boolean   @default(false)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
+}
+
+/// A gift received. Whether a thank-you is still owed comes from thankYouSentOn.
+model Gift {
+  id             String    @id @default(cuid())
+  fromName       String
+  guestId        String?
+  guest          Guest?    @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  description    String
+  receivedOn     DateTime  @db.Date
+  thankYouSentOn DateTime? @db.Date
+  notes          String?
+  isDemo         Boolean   @default(false)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([receivedOn])
 }

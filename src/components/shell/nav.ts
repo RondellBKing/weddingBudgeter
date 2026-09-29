@@ -1,7 +1,7 @@
 import type { IconName } from "@/components/ui/Icon";
 
-// Navigation. Groups leave room for the deferred modules (catering, day-of, vision board…)
-// to slot in without reshuffling everything.
+// Navigation, grouped the way a planner's binder is: money, people, guest care, design,
+// the wedding day itself, then the planning tools.
 
 export type NavItem = { href: string; label: string; icon: IconName };
 export type NavGroup = { label: string; items: NavItem[] };
@@ -16,6 +16,26 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/party", label: "Wedding Party", icon: "party" },
       { href: "/guests", label: "Guests", icon: "guests" },
       { href: "/seating", label: "Seating", icon: "seating" },
+    ],
+  },
+  {
+    label: "Guest care",
+    items: [
+      { href: "/travel", label: "Hotels & Travel", icon: "travel" },
+      { href: "/meals", label: "Meals", icon: "meals" },
+      { href: "/gifts", label: "Gifts", icon: "gift" },
+    ],
+  },
+  {
+    label: "Design",
+    items: [{ href: "/design", label: "Vision & Décor", icon: "design" }],
+  },
+  {
+    label: "Wedding day",
+    items: [
+      { href: "/timeline", label: "Timeline", icon: "timeline" },
+      { href: "/music", label: "Music", icon: "music" },
+      { href: "/photos", label: "Photos", icon: "camera" },
     ],
   },
   {

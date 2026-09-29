@@ -1,6 +1,9 @@
 import type {
+  DecorSource,
+  DesignArea,
   EventType,
   GuestSide,
+  MusicMoment,
   Owner,
   Partner,
   PaymentKind,
@@ -9,6 +12,7 @@ import type {
   Relationship,
   RsvpStatus,
   ShoeStatus,
+  ShotMoment,
   TableShape,
   TaskArea,
   TaskStatus,
@@ -113,6 +117,59 @@ export const SHOE_STATUS_LABEL: Record<ShoeStatus, string> = {
   SUBMITTED: "Sent for approval",
   APPROVED: "Approved",
   REJECTED: "Not approved",
+};
+
+export const MUSIC_MOMENT_LABEL: Record<MusicMoment, string> = {
+  PRELUDE: "Prelude (as guests arrive)",
+  PROCESSIONAL: "Processional",
+  COUPLE_ENTRANCE: "Couple's entrance",
+  RECESSIONAL: "Recessional",
+  COCKTAIL_HOUR: "Cocktail hour",
+  GRAND_ENTRANCE: "Grand entrance",
+  FIRST_DANCE: "First dance",
+  PARENT_DANCE: "Parent dances",
+  CAKE_CUTTING: "Cake cutting",
+  LAST_DANCE: "Last dance",
+  SEND_OFF: "Send-off",
+  MUST_PLAY: "Must play",
+  DO_NOT_PLAY: "Do not play",
+};
+
+export const SHOT_MOMENT_LABEL: Record<ShotMoment, string> = {
+  DETAILS: "Details",
+  GETTING_READY: "Getting ready",
+  FIRST_LOOK: "First look",
+  CEREMONY: "Ceremony",
+  FAMILY: "Family",
+  WEDDING_PARTY: "Wedding party",
+  COUPLE: "The two of us",
+  COCKTAIL_HOUR: "Cocktail hour",
+  RECEPTION: "Reception",
+  OTHER: "Other",
+};
+
+export const DESIGN_AREA_LABEL: Record<DesignArea, string> = {
+  OVERALL: "Overall look",
+  CEREMONY: "Ceremony",
+  COCKTAIL_HOUR: "Cocktail hour",
+  RECEPTION: "Reception",
+  FLOWERS: "Flowers",
+  TABLESCAPE: "Tables",
+  LIGHTING: "Lighting",
+  CAKE: "Cake and desserts",
+  STATIONERY: "Paper and signs",
+  ATTIRE: "Attire",
+  WELCOME: "Welcome and favors",
+  OTHER: "Other",
+};
+
+export const DECOR_SOURCE_LABEL: Record<DecorSource, string> = {
+  VENUE: "Venue provides",
+  VENDOR: "Vendor provides",
+  RENTAL: "Rental",
+  PURCHASE: "Buying",
+  DIY: "Making it",
+  BORROWED: "Borrowed",
 };
 
 /** Label map → options for a <select>, in declaration order. */

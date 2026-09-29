@@ -7,8 +7,20 @@ This app is the system of record for money, vendors, deadlines, the wedding part
 
 **v1 is built (phases 0–7).** Every module is live: dashboard, budget and payments, vendors,
 tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV import), seating and
-the decision log. What remains is the couple's own deploy (README → "Put it online"), and the
-deferred list below. Before any push: typecheck, lint, test, build.
+the decision log. What remains is the couple's own deploy (README → "Put it online").
+
+**Phase 8 (luxury planner) is in progress.** The couple asked for everything a full-service
+luxury planner would cover. The seeded checklist is planner-grade (99 tasks). New sections, one
+folder each, sharing the schema, labels, icons and nav added up front:
+- Wedding day: `/timeline` (run of show for rehearsal day, wedding day and day after; rain plan;
+  printable day-of binder with the vendor contact sheet), `/music` (songs by moment, processional
+  order), `/photos` (shot list).
+- Design: `/design` (inspiration board, palette seeded from the confirmed colors, décor and
+  rentals tracker whose status comes from its dates; money stays on budget items).
+- Guest care: `/travel` (hotel blocks, shuttles, welcome bags), `/meals` (meal and dietary
+  counts from guest rows; vendor meals from `Vendor.mealsRequired`), `/gifts` (gifts and
+  thank-you notes still owed).
+Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
 
 Known gaps, by choice:
 - The guest import doesn't link attendants to guest rows (`WeddingPartyMember.guestId`).
@@ -145,10 +157,7 @@ No AI features.
 
 ## Deferred (plan for, don't build yet)
 
-Catering and meal counts (vendor meals come from `Vendor.mealsRequired`, never guest rows),
-day-of itinerary (times are "HH:MM" wedding-day strings), vision board, decor and rentals,
-music, photo shot list, rain plan, gifts and thank-yous, file uploads (v1 stores a URL; later
-Vercel Blob), venue comparison (not needed).
+File uploads (v1 stores a URL; later Vercel Blob), venue comparison (not needed).
 
 ## Commands
 

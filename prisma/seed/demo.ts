@@ -4,6 +4,10 @@
 import { addDays, todayIn, toDbDate } from "../../src/lib/dates";
 import type { Prisma } from "../../src/generated/prisma/client";
 import type { Db } from "../../src/lib/db-client";
+import { seedDemoDayOf, wipeDemoDayOf } from "./demo/dayof";
+import { seedDemoDesign, wipeDemoDesign } from "./demo/design";
+import { seedDemoGuestCare, wipeDemoGuestCare } from "./demo/guest-care";
+import { seedDemoMusicPhotos, wipeDemoMusicPhotos } from "./demo/music-photos";
 
 const FIRST = ["Ava", "Marcus", "Jada", "Terrence", "Nia", "Andre", "Simone", "Darius", "Imani", "Malik", "Zoe", "Elijah", "Kendra", "Isaiah", "Brianna", "Jerome", "Tiana", "Xavier", "Monique", "Caleb"];
 const LAST = ["Rivera", "Brooks", "Coleman", "Hayes", "Price", "Bennett", "Ward", "Foster", "Graham", "Sanders", "Ellis", "Porter", "Hudson", "Warren", "Fleming", "Carver", "Lawson", "Whitaker", "Monroe", "Sutton", "Holloway", "Pryor", "Baptiste", "Okafor", "Mensah", "Delgado", "Castillo", "Moreau", "Kimura", "Novak", "Duarte", "Ferreira", "Lindqvist", "Adeyemi", "Achebe", "Vance", "Gordon", "Tate", "Quinn", "Reyes"];
@@ -60,11 +64,23 @@ export async function seedDemo(db: Db) {
   }
   await db.guest.createMany({ data: guests });
 
-  return { vendors: 3, events: 2, guests: guests.length };
+  const sections = {
+    ...(await seedDemoDayOf(db)),
+    ...(await seedDemoMusicPhotos(db)),
+    ...(await seedDemoDesign(db)),
+    ...(await seedDemoGuestCare(db)),
+  };
+  return { vendors: 3, events: 2, guests: guests.length, ...sections };
 }
 
 export async function wipeDemo(db: Db) {
   return db.$transaction(async (tx) => {
+    const sections = {
+      ...(await wipeDemoDayOf(tx)),
+      ...(await wipeDemoMusicPhotos(tx)),
+      ...(await wipeDemoDesign(tx)),
+      ...(await wipeDemoGuestCare(tx)),
+    };
     const payments = await tx.payment.deleteMany({ where: { isDemo: true } });
     const items = await tx.budgetItem.deleteMany({ where: { isDemo: true } });
     const decisions = await tx.decision.deleteMany({ where: { isDemo: true } });
@@ -82,6 +98,7 @@ export async function wipeDemo(db: Db) {
       guests: guests.count,
       seatingTables: tables.count,
       vendors: vendors.count,
+      ...sections,
     };
   });
 }
