@@ -9,18 +9,22 @@ This app is the system of record for money, vendors, deadlines, the wedding part
 tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV import), seating and
 the decision log. What remains is the couple's own deploy (README → "Put it online").
 
-**Phase 8 (luxury planner) is in progress.** The couple asked for everything a full-service
-luxury planner would cover. The seeded checklist is planner-grade (99 tasks). New sections, one
-folder each, sharing the schema, labels, icons and nav added up front:
-- Wedding day: `/timeline` (run of show for rehearsal day, wedding day and day after; rain plan;
-  printable day-of binder with the vendor contact sheet), `/music` (songs by moment, processional
-  order), `/photos` (shot list).
+**Phase 8 (luxury planner) is built.** The couple asked for everything a full-service luxury
+planner would cover. The seeded checklist is planner-grade (99 tasks). Sections, one folder each:
+- Wedding day: `/timeline` (run of show for rehearsal day, wedding day and day after, with a
+  template generator, derived vendor arrivals, the rain plan, and the printable day-of binder at
+  `/timeline/print`), `/music` (songs by moment, processional drafted from the party, DJ printout),
+  `/photos` (shot list with a standard template, photographer printout).
 - Design: `/design` (inspiration board, palette seeded from the confirmed colors, décor and
-  rentals tracker whose status comes from its dates; money stays on budget items).
+  rentals whose status comes from their dates; money stays on budget items).
 - Guest care: `/travel` (hotel blocks, shuttles, welcome bags), `/meals` (meal and dietary
-  counts from guest rows; vendor meals from `Vendor.mealsRequired`), `/gifts` (gifts and
-  thank-you notes still owed).
-Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
+  counts from guest rows; vendor meals from `Vendor.mealsRequired`; venue printout), `/gifts`
+  (gifts and thank-you notes still owed).
+- Hotel cutoffs and décor return-by dates are "deadline" items in the merged agenda (calendar,
+  dashboard, .ics feed) via `src/lib/data/planner-deadlines.ts`. The dashboard has a wedding-day
+  readiness card and counts thank-yous owed.
+- Shared pieces: `printCss()` and `PrintButton` for printouts, `MoveButtons`/`RowLayout` for
+  reorderable lists. Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
 
 Known gaps, by choice:
 - The guest import doesn't link attendants to guest rows (`WeddingPartyMember.guestId`).
