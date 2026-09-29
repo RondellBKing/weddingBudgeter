@@ -374,6 +374,21 @@ export default async function DashboardPage() {
               </ul>
             </div>
           ) : null}
+          {d.venuePackage ? (
+            <Link
+              href={`/vendors/${d.venuePackage.vendorId}#package`}
+              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-rule pt-4 hover:text-rose-ink"
+            >
+              <span className="grid gap-0.5">
+                <span className="label-caps text-[10px]">The venue package</span>
+                <span className="num text-[14px] text-cocoa">{d.venuePackage.words}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink">
+                See the list
+                <Icon name="arrow" size={14} />
+              </span>
+            </Link>
+          ) : null}
         </Card>
 
         <Card className="grid content-start gap-4 p-6 sm:p-7 lg:col-span-5" aria-labelledby="appts-h">

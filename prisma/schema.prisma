@@ -198,6 +198,7 @@ model Vendor {
   decorItems       DecorItem[]
   hotelBlocks      HotelBlock[]
   shuttleRuns      ShuttleRun[]
+  packageItems     PackageItem[]
   createdAt        DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime         @updatedAt @db.Timestamptz(3)
 
@@ -839,4 +840,46 @@ model Gift {
   updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
 
   @@index([receivedOn])
+}
+
+// ─── What a vendor's package includes ─────────────────────────────────────────
+
+/// One line of a vendor's package (mostly the venue's). Whether it's included is a fact from the
+/// contract that the couple records; nothing here is derived or priced (money stays on budget items).
+model PackageItem {
+  id        String          @id @default(cuid())
+  vendorId  String
+  vendor    Vendor          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  section   PackageSection
+  name      String
+  status    InclusionStatus @default(TO_CONFIRM)
+  notes     String?
+  sortOrder Int             @default(0)
+  isDemo    Boolean         @default(false)
+  seedKey   String?         @unique
+  createdAt DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@index([vendorId, section, sortOrder])
+}
+
+enum PackageSection {
+  SPACE
+  CEREMONY
+  COCKTAIL_HOUR
+  DINNER
+  DESSERT
+  BAR
+  TABLES
+  SUITES
+  STAFF
+  GUESTS
+  OTHER
+}
+
+enum InclusionStatus {
+  INCLUDED
+  EXTRA_COST
+  NOT_INCLUDED
+  TO_CONFIRM
 }

@@ -3,7 +3,9 @@ import type {
   DesignArea,
   EventType,
   GuestSide,
+  InclusionStatus,
   MusicMoment,
+  PackageSection,
   Owner,
   Partner,
   PaymentKind,
@@ -171,6 +173,27 @@ export const DECOR_SOURCE_LABEL: Record<DecorSource, string> = {
   PURCHASE: "Buying",
   DIY: "Making it",
   BORROWED: "Borrowed",
+};
+
+export const PACKAGE_SECTION_LABEL: Record<PackageSection, string> = {
+  SPACE: "The space",
+  CEREMONY: "Ceremony",
+  COCKTAIL_HOUR: "Cocktail hour",
+  DINNER: "Dinner",
+  DESSERT: "Cake and dessert",
+  BAR: "Bar",
+  TABLES: "Tables and linens",
+  SUITES: "Getting-ready suites",
+  STAFF: "Staff and service",
+  GUESTS: "For guests",
+  OTHER: "Other",
+};
+
+export const INCLUSION_STATUS_LABEL: Record<InclusionStatus, string> = {
+  INCLUDED: "Included",
+  EXTRA_COST: "Costs extra",
+  NOT_INCLUDED: "Not included",
+  TO_CONFIRM: "To confirm",
 };
 
 /** Label map → options for a <select>, in declaration order. */

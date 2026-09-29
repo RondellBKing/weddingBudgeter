@@ -7,16 +7,29 @@ import { Card, CardHeading } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { Sprig } from "@/components/ui/Ornaments";
 import { AddNoteForm } from "@/components/vendors/AddNoteForm";
+import { AddPackageLineForm, PackageLineRow } from "@/components/vendors/PackageList";
 import { AddQuestionForm, QuestionItem } from "@/components/vendors/Questions";
 import { VendorMoneyCard } from "@/components/vendors/VendorMoneyCard";
 import { VendorStatusBadge } from "@/components/vendors/VendorStatusBadge";
 import { requireSession } from "@/lib/auth/require-session";
 import { loadVendor } from "@/lib/data/vendors";
 import { compareDates, daysBetween, formatClockTime, formatDate, formatInstant, relativeDays } from "@/lib/dates";
+import { groupPackage, packageSummary, summaryWords } from "@/lib/domain/package";
 import { displayUrl, instagramUrl, telHref } from "@/lib/domain/vendor-contact";
 import { arrivesBeforeAccess, statusGroup, VENDOR_CATEGORY_LABEL } from "@/lib/domain/vendors";
 import { EVENT_TYPE_LABEL, PARTNER_LABEL, TASK_STATUS_LABEL } from "@/lib/labels";
-import { addNote, addQuestion, clearAnswer, deleteNote, deleteQuestion, saveQuestion } from "../actions";
+import {
+  addNote,
+  addPackageItem,
+  addQuestion,
+  clearAnswer,
+  deleteNote,
+  deletePackageItem,
+  deleteQuestion,
+  savePackageItem,
+  saveQuestion,
+  setPackageIncluded,
+} from "../actions";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const data = await loadVendor((await params).id);
@@ -49,7 +62,9 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const data = await loadVendor(id);
   if (!data) notFound();
-  const { plan, vendor: v, money, questions, log, tasks, events } = data;
+  const { plan, vendor: v, money, questions, log, tasks, events, packageLines } = data;
+  const packageGroups = groupPackage(packageLines);
+  const pkg = packageSummary(packageLines);
   const { settings, today } = plan;
   const tz = settings.timezone;
   const early = arrivesBeforeAccess(v.arrivalTime, settings.venueAccessTime);
@@ -182,6 +197,50 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
         categoryName={data.categoryName}
         headcount={plan.headcount.headcount}
       />
+
+      {/* What the package includes */}
+      <Card id="package" className="grid scroll-mt-24 gap-6 p-6 sm:p-8" aria-labelledby="package-h">
+        <CardHeading
+          id="package-h"
+          title={v.category === "VENUE" ? "What the venue package includes" : "What's included"}
+          action={packageLines.length > 0 ? <span className="num text-[13px] text-muted">{summaryWords(pkg)}</span> : undefined}
+        />
+        {packageLines.length > 0 ? (
+          <>
+            <p className="max-w-prose text-sm text-cocoa">
+              Tick each line once the contract or the {v.category === "VENUE" ? "venue" : "vendor"} confirms it&apos;s included. Anything that costs extra
+              belongs in the Budget as its own line.
+            </p>
+            <div className="grid">
+              {packageGroups.map((g) => (
+                <section
+                  key={g.section}
+                  aria-label={g.label}
+                  className="grid gap-2 border-b border-rule py-5 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8"
+                >
+                  <h3 className="font-display text-[22px] leading-tight italic">{g.label}</h3>
+                  <ul className="grid">
+                    {g.lines.map((line) => (
+                      <PackageLineRow
+                        key={line.id}
+                        line={line}
+                        toggle={setPackageIncluded.bind(null, line.id, line.status !== "INCLUDED")}
+                        save={savePackageItem.bind(null, line.id)}
+                        remove={deletePackageItem.bind(null, line.id)}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted">Nothing listed yet. Add what their package covers, and tick each line once it&apos;s confirmed.</p>
+        )}
+        <div className="border-t border-rule pt-5">
+          <AddPackageLineForm action={addPackageItem.bind(null, v.id)} />
+        </div>
+      </Card>
 
       <div className="grid items-start gap-5 lg:grid-cols-12">
         {/* Questions to ask */}

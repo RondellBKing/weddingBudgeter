@@ -15,6 +15,7 @@ import { buildAgenda } from "../domain/agenda";
 import { prisma } from "../db";
 import { sizingRollup, sizingUrgency } from "../domain/party-sizing";
 import { KEY_MOMENTS, stillToChoose } from "../domain/music";
+import { packageSummary, summaryWords } from "../domain/package";
 import { vendorsMissingArrival } from "../domain/timeline";
 import { coverage } from "../domain/vendors";
 import { loadPlan } from "./plan";
@@ -51,6 +52,7 @@ export async function loadDashboard() {
     songs,
     shots,
     mustHaveShots,
+    venuePackageLines,
   ] = await Promise.all([
     prisma.task.findMany({
       where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(weekAhead) } },
@@ -101,6 +103,7 @@ export async function loadDashboard() {
     prisma.songRequest.findMany({ select: { moment: true } }),
     prisma.shotListItem.count(),
     prisma.shotListItem.count({ where: { isMustHave: true } }),
+    prisma.packageItem.findMany({ where: { vendor: { category: "VENUE" } }, select: { status: true, vendorId: true } }),
   ]);
 
   const toTask = (t: (typeof dueSoon)[number]): DashboardTask => {
@@ -197,6 +200,10 @@ export async function loadDashboard() {
     overduePayments: plan.nextPayments.filter((p) => p.state === "overdue"),
     deadlinesDueSoon,
     thankYousOwed,
+    venuePackage:
+      venuePackageLines.length > 0
+        ? { vendorId: venuePackageLines[0]!.vendorId, words: summaryWords(packageSummary(venuePackageLines)) }
+        : null,
     weddingDay: {
       ceremonyTime: settings.ceremonyTime,
       moments: weddingDayMoments,

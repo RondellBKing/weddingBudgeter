@@ -8,7 +8,8 @@ import { todayIn, toDbDate, WEDDING_TZ } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import { readVendorForm, vendorSchema, type VendorFormState } from "@/lib/domain/vendor-form";
 import { fieldErrors, zOptionalText, zText, type ActionState } from "@/lib/forms";
-import { PARTNER_LABEL, valuesOf } from "@/lib/labels";
+import { nextPackageOrder } from "@/lib/domain/package";
+import { INCLUSION_STATUS_LABEL, PACKAGE_SECTION_LABEL, PARTNER_LABEL, valuesOf } from "@/lib/labels";
 
 /** Today on the wedding's calendar (never the server's clock). */
 async function weddingToday() {
@@ -125,6 +126,60 @@ export async function deleteQuestion(questionId: string): Promise<void> {
   if (!q) return;
   await prisma.vendorQuestion.delete({ where: { id: questionId } });
   revalidateVendor(q.vendorId);
+}
+
+// ─── What the package includes ─────────────────────────────────────────────────
+
+const packageSchema = z.object({
+  name: zText(200),
+  section: z.enum(valuesOf(PACKAGE_SECTION_LABEL), { error: "Pick where it belongs" }),
+  status: z.enum(valuesOf(INCLUSION_STATUS_LABEL), { error: "Pick whether it's included" }),
+  notes: zOptionalText(1000),
+});
+
+function readPackageForm(form: FormData) {
+  return packageSchema.safeParse({
+    name: form.get("name") ?? "",
+    section: form.get("section") ?? "",
+    status: form.get("status") ?? "TO_CONFIRM",
+    notes: form.get("notes") ?? "",
+  });
+}
+
+export async function addPackageItem(vendorId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireSession();
+  const parsed = readPackageForm(form);
+  if (!parsed.success) return fieldErrors(parsed.error);
+  const vendor = await prisma.vendor.findUnique({ where: { id: vendorId }, select: { id: true } });
+  if (!vendor) return { ok: false, message: "This vendor no longer exists." };
+  const inSection = await prisma.packageItem.findMany({ where: { vendorId, section: parsed.data.section }, select: { sortOrder: true } });
+  await prisma.packageItem.create({ data: { vendorId, ...parsed.data, sortOrder: nextPackageOrder(inSection) } });
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Added." };
+}
+
+export async function savePackageItem(itemId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireSession();
+  const parsed = readPackageForm(form);
+  if (!parsed.success) return fieldErrors(parsed.error);
+  const item = await prisma.packageItem.findUnique({ where: { id: itemId }, select: { id: true } });
+  if (!item) return { ok: false, message: "This line was deleted." };
+  await prisma.packageItem.update({ where: { id: itemId }, data: parsed.data });
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Saved." };
+}
+
+/** The tick box: ticked means "included"; unticking puts it back to "to confirm". */
+export async function setPackageIncluded(itemId: string, included: boolean): Promise<void> {
+  await requireSession();
+  await prisma.packageItem.updateMany({ where: { id: itemId }, data: { status: included ? "INCLUDED" : "TO_CONFIRM" } });
+  revalidatePath("/", "layout");
+}
+
+export async function deletePackageItem(itemId: string): Promise<void> {
+  await requireSession();
+  await prisma.packageItem.deleteMany({ where: { id: itemId } });
+  revalidatePath("/", "layout");
 }
 
 // ─── Communication log ─────────────────────────────────────────────────────────

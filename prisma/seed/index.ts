@@ -20,6 +20,7 @@ import {
   SETTINGS,
   VENUE,
   VENUE_ITEM,
+  VENUE_PACKAGE,
   VENUE_PAYMENTS,
   VENUE_QUESTIONS,
   WEDDING_PARTY,
@@ -150,6 +151,22 @@ async function main() {
             rationale: d.rationale ?? null,
             decidedBy: "BOTH",
             vendorId: d.linkVenue ? venue.id : null,
+          },
+        });
+      }
+
+      for (const [i, p] of VENUE_PACKAGE.entries()) {
+        await tx.packageItem.upsert({
+          where: { seedKey: p.key },
+          update: {},
+          create: {
+            seedKey: p.key,
+            vendorId: venue.id,
+            section: p.section,
+            name: p.name,
+            status: p.status,
+            notes: p.notes ?? null,
+            sortOrder: i,
           },
         });
       }

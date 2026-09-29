@@ -56,6 +56,7 @@ export const loadVendor = cache(async (id: string) => {
       log: { orderBy: [{ at: "desc" }, { createdAt: "desc" }] },
       tasks: { orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { title: "asc" }] },
       events: true,
+      packageItems: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
     },
   });
   if (!v) return null;
@@ -115,6 +116,14 @@ export const loadVendor = cache(async (id: string) => {
       isMilestone: t.isMilestone,
     })),
     events,
+    packageLines: v.packageItems.map((p) => ({
+      id: p.id,
+      section: p.section,
+      name: p.name,
+      status: p.status,
+      notes: p.notes,
+      sortOrder: p.sortOrder,
+    })),
   };
 });
 

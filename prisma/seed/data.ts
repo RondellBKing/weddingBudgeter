@@ -133,6 +133,58 @@ export const APPOINTMENTS: Array<{
   },
 ];
 
+// ─── The venue package ─────────────────────────────────────────────────────────
+
+type PackageSeed = {
+  key: string;
+  section: "SPACE" | "CEREMONY" | "COCKTAIL_HOUR" | "DINNER" | "DESSERT" | "BAR" | "TABLES" | "SUITES" | "STAFF" | "GUESTS" | "OTHER";
+  name: string;
+  status: "INCLUDED" | "EXTRA_COST" | "NOT_INCLUDED" | "TO_CONFIRM";
+  notes?: string;
+};
+
+const LISTED = "Listed on public wedding sites for this venue. Check it against your contract.";
+const ASK = "Not in the public listings. Ask the venue.";
+
+/**
+ * What the venue package covers. Three kinds of line: facts from the signed contract (included or
+ * extra), items public wedding listings describe (to confirm against the contract), and the usual
+ * package items nobody has confirmed yet (to ask).
+ */
+export const VENUE_PACKAGE: PackageSeed[] = [
+  // From the contract
+  { key: "venue-pkg-event-125", section: "SPACE", name: "The wedding at the estate for 125 people", status: "INCLUDED", notes: "The 125 counts everyone eating, including the two of you and the wedding party. $200 for each person above 125, due April 1, 2028." },
+  { key: "venue-pkg-vendor-access", section: "STAFF", name: "Vendor and setup access from 6:00 AM", status: "INCLUDED" },
+  { key: "venue-pkg-maitre-d", section: "STAFF", name: "Maître d' service", status: "EXTRA_COST", notes: "A mandatory $3,350 service charge on the payment schedule, due April 1, 2028. It's not a tip." },
+  // Public listings
+  { key: "venue-pkg-hors-doeuvres", section: "COCKTAIL_HOUR", name: "Butler-passed hot and cold hors d'oeuvres", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-sommelier", section: "COCKTAIL_HOUR", name: "Sommelier station", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-cheese", section: "COCKTAIL_HOUR", name: "Cheese station", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-displays", section: "COCKTAIL_HOUR", name: "Displays of fruit, antipasto and salads", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-seafood-sushi", section: "COCKTAIL_HOUR", name: "Seafood and sushi stations", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-dinner", section: "DINNER", name: "Dinner from the venue's kitchen", status: "TO_CONFIRM", notes: "Catering is part of the venue's packages in public listings. The menu is chosen at the tasting." },
+  { key: "venue-pkg-bar", section: "BAR", name: "Full-service bar", status: "TO_CONFIRM", notes: `${LISTED} Ask how many hours, and which liquors are included.` },
+  { key: "venue-pkg-linens", section: "TABLES", name: "Colored table linens", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-suites", section: "SUITES", name: "Couple's suites with makeup stations, private restrooms, TV and sound system", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-suite-snacks", section: "SUITES", name: "Drinks and light snacks in the suites", status: "TO_CONFIRM", notes: LISTED },
+  { key: "venue-pkg-valet", section: "GUESTS", name: "Valet parking", status: "TO_CONFIRM", notes: LISTED },
+  // The usual package items, still to ask about
+  { key: "venue-pkg-ceremony-setup", section: "CEREMONY", name: "Ceremony chairs and setup", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-rain-space", section: "CEREMONY", name: "Indoor ceremony space if it rains", status: "TO_CONFIRM", notes: `${ASK} Ask how many people it holds.` },
+  { key: "venue-pkg-vendor-meals", section: "DINNER", name: "Vendor meals", status: "TO_CONFIRM", notes: `${ASK} Also ask whether they count toward the 125.` },
+  { key: "venue-pkg-cake", section: "DESSERT", name: "Wedding cake and cake cutting", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-dessert", section: "DESSERT", name: "Dessert or a Viennese table", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-champagne", section: "BAR", name: "Champagne toast", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-tableware", section: "TABLES", name: "Tables, chairs, china, glassware and flatware", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-centerpieces", section: "TABLES", name: "Centerpieces or table décor", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-paper", section: "TABLES", name: "Printed menus, table numbers and place cards", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-dance-floor", section: "SPACE", name: "Dance floor", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-lighting", section: "SPACE", name: "Lighting and uplighting", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-coordinator", section: "STAFF", name: "Banquet manager or day-of coordinator on site", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-late-night", section: "GUESTS", name: "Late-night snack", status: "TO_CONFIRM", notes: ASK },
+  { key: "venue-pkg-coat-check", section: "GUESTS", name: "Coat check", status: "TO_CONFIRM", notes: ASK },
+];
+
 export const WEDDING_PARTY: Array<{
   key: string;
   side: "BRIDE_SIDE" | "GROOM_SIDE";
