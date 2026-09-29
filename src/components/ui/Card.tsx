@@ -24,13 +24,14 @@ export function Card({
   );
 }
 
-/** Small uppercase heading row used at the top of cards. */
+/** The row at the top of a card: small caps title, a hairline across, and an optional link. */
 export function CardHeading({ title, action, id }: { title: string; action?: ReactNode; id?: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
       <h2 id={id} className="label-caps">
         {title}
       </h2>
+      <span aria-hidden className="h-px min-w-8 flex-1 bg-rule" />
       {action}
     </div>
   );

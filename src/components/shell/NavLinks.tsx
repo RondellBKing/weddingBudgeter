@@ -11,14 +11,15 @@ function SideLink({ item, pathname }: { item: NavItem; pathname: string }) {
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`group flex items-center gap-3 rounded-[3px] px-3 py-2 text-[15px] transition-colors ${
-        active ? "bg-linen/70 font-medium text-chocolate" : "text-cocoa hover:bg-linen/40 hover:text-chocolate"
+      className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-[7px] text-[14.5px] transition-colors ${
+        active ? "bg-ivory/[0.08] text-ivory" : "text-ivory/75 hover:bg-ivory/[0.04] hover:text-ivory"
       }`}
     >
+      {active ? <span aria-hidden className="absolute inset-y-1.5 left-0 w-[2px] bg-dusty-rose" /> : null}
       <Icon
         name={item.icon}
-        size={19}
-        className={active ? "text-rose-ink" : "text-muted transition-colors group-hover:text-cocoa"}
+        size={18}
+        className={active ? "text-dusty-rose" : "text-ivory/45 transition-colors group-hover:text-ivory/75"}
       />
       {item.label}
     </Link>
@@ -28,16 +29,16 @@ function SideLink({ item, pathname }: { item: NavItem; pathname: string }) {
 export function SidebarLinks() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Main" className="grid gap-6">
+    <nav aria-label="Main" className="grid gap-5">
       {NAV_GROUPS.map((group) => (
-        <div key={group.label} className="grid gap-1">
-          <p className="label-caps px-3 pb-1 text-[10px]">{group.label}</p>
+        <div key={group.label} className="grid gap-0.5">
+          <p className="px-3 pb-1 text-[10px] font-medium tracking-[0.2em] text-gold-light/90 uppercase">{group.label}</p>
           {group.items.map((item) => (
             <SideLink key={item.href} item={item} pathname={pathname} />
           ))}
         </div>
       ))}
-      <div className="grid gap-1 border-t border-rule pt-5">
+      <div className="grid gap-1 border-t border-ivory/10 pt-4">
         <SideLink item={SETTINGS_ITEM} pathname={pathname} />
       </div>
     </nav>

@@ -7,6 +7,8 @@
   Contrast on Ivory (WCAG AA needs 4.5:1 for body text):
     chocolate 11.8 · cocoa 8.3 · brick 6.0 · muted 4.85 → safe for text
     garden 4.1 · desert-rose 3.4 · gold 2.6 · dusty-rose 1.9 → fills only; use the *-ink variants for text
+  On Chocolate (the masthead, the cover):
+    ivory 12.9 · gold-light 7.3 · dusty-rose 6.1 → safe for text
 */
 @theme {
   --color-*: initial;
@@ -28,6 +30,7 @@
   --color-rose-ink: #a15651; /* rose for text, 4.7:1 */
   --color-gold: #b8912f; /* yellow gold, sparingly (fills only) */
   --color-gold-ink: #836722; /* gold for text, 4.7:1 */
+  --color-gold-light: #d8bd7a; /* gold for text on chocolate, 7.3:1 */
   --color-garden: #6b7a5a; /* on track (fills) */
   --color-garden-ink: #637154; /* on track (text), 4.6:1 */
   --color-brick: #9c3b2e; /* overdue / over budget */
@@ -74,6 +77,20 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-muted);
+}
+
+/* The magazine "deck": a serif italic standfirst under a title. */
+@utility deck {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--color-cocoa);
+  text-wrap: pretty;
+  @media (min-width: 40rem) {
+    font-size: 22px;
+  }
 }
 
 /* Aligned money columns. */

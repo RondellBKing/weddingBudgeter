@@ -2,9 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/require-session";
 import { authConfigured } from "@/lib/auth/config";
 import { safeNextPath } from "@/lib/auth/request";
-import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
-import { Divider, Monogram, Sprig } from "@/components/ui/Ornaments";
+import { Monogram, Sprig } from "@/components/ui/Ornaments";
 
 export const metadata = { title: "Sign in" };
 
@@ -36,23 +35,46 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         : undefined;
 
   return (
-    <main className="grid min-h-dvh place-items-center px-4 py-10">
-      <div className="grid w-full max-w-md gap-6">
-        <Card framed as="div" className="overflow-hidden px-7 pt-14 pb-10 sm:px-12">
-          <Sprig className="pointer-events-none absolute -top-2 -left-8 w-40 opacity-90" />
-          <Sprig flip="xy" className="pointer-events-none absolute -right-8 -bottom-2 w-40 opacity-90" />
+    <main className="grid min-h-dvh md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      {/* The cover */}
+      <section className="relative grid place-items-center overflow-hidden bg-chocolate px-8 py-14 text-center text-ivory md:py-10">
+        <Sprig className="pointer-events-none absolute -top-4 -left-10 w-56 opacity-30 md:w-80" />
+        <Sprig flip="xy" className="pointer-events-none absolute -right-10 -bottom-4 w-56 opacity-25 md:w-80" />
+        <span aria-hidden className="pointer-events-none absolute inset-4 rounded-[2px] border border-gold-light/20" />
+        <header className="relative grid justify-items-center gap-5">
+          <Monogram first="Rondell" second="Capri" size="lg" tone="dark" />
+          <p className="font-display text-[20px] text-ivory/80 italic">The wedding of</p>
+          <h1 className="text-[52px] leading-[0.92] tracking-[-0.015em] sm:text-[72px] lg:text-[88px]">
+            Rondell <em className="text-dusty-rose italic">&amp;</em>
+            <br className="hidden sm:block" /> Capri
+          </h1>
+          <div aria-hidden className="flex w-48 items-center gap-3">
+            <span className="h-px flex-1 bg-gold-light/50" />
+            <svg viewBox="0 0 12 12" className="size-2.5 fill-gold-light">
+              <path d="M6 0 12 6 6 12 0 6z" />
+            </svg>
+            <span className="h-px flex-1 bg-gold-light/50" />
+          </div>
+          <p className="text-[11px] font-medium tracking-[0.3em] text-ivory/90 uppercase">Thursday · April 13 · 2028</p>
+          <p className="font-display text-[19px] text-ivory/75 italic">The Estate at Florentine Gardens</p>
+        </header>
+      </section>
 
-          <header className="relative grid justify-items-center gap-4 text-center">
-            <Monogram first="Rondell" second="Capri" size="lg" />
-            <p className="label-caps tracking-[0.28em] text-rose-ink">The wedding planner of</p>
-            <h1 className="text-[44px] leading-none sm:text-[52px]">
-              Rondell <em className="text-rose-ink italic">&amp;</em> Capri
-            </h1>
-            <Divider className="w-36" />
-            <p className="text-[11px] font-medium tracking-[0.3em] text-cocoa uppercase">Thursday · April 13 · 2028</p>
-          </header>
+      {/* Sign in */}
+      <section className="grid place-items-center px-6 py-12 sm:px-10">
+        <div className="grid w-full max-w-sm gap-8">
+          <div className="grid gap-3">
+            <p className="label-caps flex items-center gap-3 text-rose-ink">
+              <span aria-hidden className="h-px w-8 bg-gold/70" />
+              The planning journal
+            </p>
+            <h2 className="text-[44px] leading-none">
+              Welcome <em className="italic">back</em>
+            </h2>
+            <p className="deck">One passphrase for the two of you.</p>
+          </div>
 
-          <form action="/api/login" method="post" className="relative mt-10 grid gap-4">
+          <form action="/api/login" method="post" className="grid gap-4">
             <input type="hidden" name="next" value={next} />
             <div className="grid gap-2">
               <label htmlFor="password" className="label-caps">
@@ -67,7 +89,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                 autoFocus
                 aria-invalid={error?.tone === "error" ? true : undefined}
                 aria-describedby={error || info ? "login-message" : undefined}
-                className="w-full rounded-[3px] border border-rule-strong bg-ivory/50 px-4 py-3 text-base text-chocolate transition-colors focus:border-desert-rose focus:bg-paper aria-[invalid=true]:border-brick"
+                className="w-full rounded-[3px] border border-rule-strong bg-paper px-4 py-3 text-base text-chocolate transition-colors focus:border-desert-rose aria-[invalid=true]:border-brick"
               />
             </div>
             {error || info ? (
@@ -86,12 +108,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               Open our planner
             </button>
           </form>
-        </Card>
-        <p className="flex items-center justify-center gap-2 text-xs text-muted">
-          <Icon name="lock" size={14} />
-          Private. For the two of us only.
-        </p>
-      </div>
+          <p className="flex items-center gap-2 border-t border-rule pt-5 text-xs text-muted">
+            <Icon name="lock" size={14} />
+            Private. For the two of us only.
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

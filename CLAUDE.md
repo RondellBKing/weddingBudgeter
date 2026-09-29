@@ -10,7 +10,11 @@ tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV imp
 the decision log. What remains is the couple's own deploy (README → "Put it online").
 
 **Phase 8 (luxury planner) is built.** The couple asked for everything a full-service luxury
-planner would cover. The seeded checklist is planner-grade (105 tasks). Sections, one folder each:
+planner would cover. The seeded checklist is planner-grade (109 tasks, 27 of them milestones).
+Sections, one folder each:
+- Plan: `/planning` (the planning timeline, "The road to April 13": every milestone task and
+  appointment from the signed contract on, in chapters counted back from the wedding, with tick
+  boxes and a "today" marker; rules in `domain/planning.ts`).
 - Wedding day: `/timeline` (run of show for rehearsal day, wedding day and day after, with a
   template generator, derived vendor arrivals, the rain plan, and the printable day-of binder at
   `/timeline/print`), `/music` (songs by moment, processional drafted from the party, DJ printout),
@@ -23,6 +27,8 @@ planner would cover. The seeded checklist is planner-grade (105 tasks). Sections
 - Hotel cutoffs and décor return-by dates are "deadline" items in the merged agenda (calendar,
   dashboard, .ics feed) via `src/lib/data/planner-deadlines.ts`. The dashboard has a wedding-day
   readiness card and counts thank-yous owed.
+- Every vendor page has a "What's included" list (`PackageItem`); the venue's is seeded from the
+  contract facts, public listings (marked "to confirm") and the usual items to ask about.
 - Shared pieces: `printCss()` and `PrintButton` for printouts, `MoveButtons`/`RowLayout` for
   reorderable lists. Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
 
@@ -134,9 +140,16 @@ The user found long option lists overwhelming. Ask one question at a time, in pl
 
 ## Design
 
-Editorial wedding stationery, not an admin dashboard. Serif page titles with the descriptor
-word in italic ("Our *Budget*"), quiet sans for data, 1px hairline rules, lots of air, big quiet
-numbers, small uppercase tracked labels (`label-caps`), tabular numbers (`num`).
+Editorial wedding stationery, not an admin dashboard: the private portal a planner to the stars
+would hand a couple. Serif page titles with the descriptor word in italic ("Our *Budget*"), quiet
+sans for data, 1px hairline rules, lots of air, big quiet numbers, small uppercase tracked labels
+(`label-caps`), tabular numbers (`num`).
+
+- The masthead: a chocolate sidebar (and phone header) with ivory and `gold-light` type, a dusty
+  rose mark on the current page. The dashboard opens with a chocolate magazine cover (names,
+  date, venue, countdown, "next milestone / payment / appointment"); sign-in is a split cover.
+- `PageTitle` is the page masthead: eyebrow on a gold rule, a large serif title, a hairline with
+  a gold diamond, and the intro as a serif italic `deck`. `CardHeading` runs a hairline to its link.
 
 - Fonts: Cormorant Garamond (500/600 + italic) for titles; Inter for everything else.
 - The look is a wedding planner / stationery suite: the couple's monogram in a double gold ring,
@@ -147,7 +160,8 @@ numbers, small uppercase tracked labels (`label-caps`), tabular numbers (`num`).
 - Tokens live in `src/app/globals.css` (`@theme`). Tailwind's default palette is cleared.
   Chocolate #3E2B22 text · Cocoa #5C4033 · Ivory #F7F0E8 background · Paper #FFFCF8 surfaces ·
   Dusty Rose #D9A3A0 (primary accent) · Desert Rose #B5706B (secondary) · Gold #B8912F
-  (sparingly) · Garden #6B7A5A on track · Brick #9C3B2E overdue.
+  (sparingly) · Garden #6B7A5A on track · Brick #9C3B2E overdue · Gold-light #D8BD7A (text on
+  chocolate only).
 - **Text contrast:** Dusty Rose, Desert Rose, Gold and Garden fail AA as text on Ivory. Use them
   for fills only; for text use `rose-ink` #A15651, `gold-ink` #836722, `garden-ink` #637154.
 - Status = on track Garden · due soon Gold · overdue Brick, always with a word, never color alone.

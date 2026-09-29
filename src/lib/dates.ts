@@ -115,6 +115,7 @@ type DateStyle =
   | "weekday-long"
   | "weekday-medium"
   | "month-day"
+  | "month-day-long"
   | "month-year"
   | "weekday-short";
 
@@ -125,6 +126,7 @@ const DATE_FORMATS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   "weekday-long": { weekday: "long", year: "numeric", month: "long", day: "numeric" },
   "weekday-medium": { weekday: "short", year: "numeric", month: "short", day: "numeric" },
   "month-day": { month: "short", day: "numeric" },
+  "month-day-long": { month: "long", day: "numeric" },
   "month-year": { month: "long", year: "numeric" },
   "weekday-short": { weekday: "short" },
 };

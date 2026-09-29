@@ -1,13 +1,22 @@
 import type { IconName } from "@/components/ui/Icon";
 
-// Navigation, grouped the way a planner's binder is: money, people, guest care, design,
-// the wedding day itself, then the planning tools.
+// Navigation, grouped the way a planner's binder is: the plan first, then money, people, guest
+// care, design and the wedding day itself.
 
 export type NavItem = { href: string; label: string; icon: IconName };
 export type NavGroup = { label: string; items: NavItem[] };
 
 export const NAV_GROUPS: NavGroup[] = [
   { label: "Overview", items: [{ href: "/", label: "Dashboard", icon: "home" }] },
+  {
+    label: "Plan",
+    items: [
+      { href: "/planning", label: "Planning Timeline", icon: "timeline" },
+      { href: "/tasks", label: "Tasks", icon: "tasks" },
+      { href: "/calendar", label: "Calendar", icon: "calendar" },
+      { href: "/decisions", label: "Decisions", icon: "decisions" },
+    ],
+  },
   { label: "Money", items: [{ href: "/budget", label: "Budget", icon: "budget" }] },
   {
     label: "People",
@@ -33,17 +42,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Wedding day",
     items: [
-      { href: "/timeline", label: "Timeline", icon: "timeline" },
+      { href: "/timeline", label: "Day-of Timeline", icon: "clock" },
       { href: "/music", label: "Music", icon: "music" },
       { href: "/photos", label: "Photos", icon: "camera" },
-    ],
-  },
-  {
-    label: "Plan",
-    items: [
-      { href: "/tasks", label: "Tasks", icon: "tasks" },
-      { href: "/calendar", label: "Calendar", icon: "calendar" },
-      { href: "/decisions", label: "Decisions", icon: "decisions" },
     ],
   },
 ];

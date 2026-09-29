@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 
-/** "Our *Dashboard*": serif page title with the descriptor word in italic, plus an optional intro. */
+/**
+ * "Our *Budget*": the page's masthead. A small eyebrow on a gold rule, the serif title with the
+ * descriptor word in italic, a hairline with a gold diamond, and the intro set as a serif deck.
+ */
 export function PageTitle({
   word,
   lead = "Our",
@@ -16,15 +19,28 @@ export function PageTitle({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
-      <div className="grid min-w-0 gap-3">
-        {eyebrow ? <p className="label-caps text-rose-ink">{eyebrow}</p> : null}
-        <h1 className="text-[42px] leading-[1.02] tracking-[-0.01em] sm:text-[56px] lg:text-[64px]">
-          {lead} <em className="italic">{word}</em>
-        </h1>
-        {intro ? <p className="max-w-2xl text-[15px] leading-relaxed text-cocoa">{intro}</p> : null}
+    <header className="grid gap-5 sm:gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+        <div className="grid min-w-0 gap-3 sm:gap-4">
+          {eyebrow ? (
+            <p className="label-caps flex items-center gap-3 text-rose-ink">
+              <span aria-hidden className="h-px w-8 bg-gold/70" />
+              {eyebrow}
+            </p>
+          ) : null}
+          <h1 className="text-[44px] leading-[0.98] tracking-[-0.015em] sm:text-[64px] lg:text-[76px]">
+            {lead} <em className="italic">{word}</em>
+          </h1>
+        </div>
+        {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
+      <div aria-hidden className="flex items-center gap-3">
+        <svg viewBox="0 0 12 12" className="size-2.5 shrink-0 fill-gold/80">
+          <path d="M6 0 12 6 6 12 0 6z" />
+        </svg>
+        <span className="h-px flex-1 bg-rule-strong/80" />
+      </div>
+      {intro ? <p className="deck max-w-3xl">{intro}</p> : null}
     </header>
   );
 }

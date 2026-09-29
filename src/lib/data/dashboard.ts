@@ -53,6 +53,7 @@ export async function loadDashboard() {
     shots,
     mustHaveShots,
     venuePackageLines,
+    nextMilestoneRow,
   ] = await Promise.all([
     prisma.task.findMany({
       where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(weekAhead) } },
@@ -104,6 +105,11 @@ export async function loadDashboard() {
     prisma.shotListItem.count(),
     prisma.shotListItem.count({ where: { isMustHave: true } }),
     prisma.packageItem.findMany({ where: { vendor: { category: "VENUE" } }, select: { status: true, vendorId: true } }),
+    prisma.task.findFirst({
+      where: { isMilestone: true, status: { not: "DONE" }, dueDate: { gte: toDbDate(today) } },
+      orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
+      select: { title: true, dueDate: true },
+    }),
   ]);
 
   const toTask = (t: (typeof dueSoon)[number]): DashboardTask => {
@@ -200,6 +206,10 @@ export async function loadDashboard() {
     overduePayments: plan.nextPayments.filter((p) => p.state === "overdue"),
     deadlinesDueSoon,
     thankYousOwed,
+    nextMilestone: nextMilestoneRow?.dueDate
+      ? { title: nextMilestoneRow.title, date: fromDbDate(nextMilestoneRow.dueDate), daysUntil: daysBetween(today, fromDbDate(nextMilestoneRow.dueDate)) }
+      : null,
+    nextAppointment: appointments[0] ?? null,
     venuePackage:
       venuePackageLines.length > 0
         ? { vendorId: venuePackageLines[0]!.vendorId, words: summaryWords(packageSummary(venuePackageLines)) }

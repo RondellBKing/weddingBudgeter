@@ -44,37 +44,47 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         Skip to content
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r border-rule bg-paper px-4 py-7 md:flex">
-        <Link href="/" className="flex items-center gap-3 px-2">
-          <Monogram first={settings.partnerOneName} second={settings.partnerTwoName} />
-          <span className="grid gap-0.5">
-            <span className="font-display text-[21px] leading-tight">
-              {settings.partnerOneName} <em className="text-rose-ink italic">&amp;</em> {settings.partnerTwoName}
+      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-chocolate px-4 py-8 text-ivory md:flex">
+        {/* The masthead */}
+        <Link href="/" className="grid justify-items-center gap-3 px-2 text-center">
+          <Monogram first={settings.partnerOneName} second={settings.partnerTwoName} tone="dark" />
+          <span className="grid gap-1.5">
+            <span className="font-display text-[23px] leading-tight">
+              {settings.partnerOneName} <em className="text-dusty-rose italic">&amp;</em> {settings.partnerTwoName}
             </span>
-            <span className="label-caps text-[10px]">{formatDate(settings.weddingDate, "long")}</span>
+            <span className="text-[10px] font-medium tracking-[0.28em] text-gold-light uppercase">
+              {formatDate(settings.weddingDate, "long")}
+            </span>
           </span>
         </Link>
+        <div aria-hidden className="mx-6 mt-6 flex items-center gap-2.5">
+          <span className="h-px flex-1 bg-gold-light/30" />
+          <svg viewBox="0 0 12 12" className="size-2 fill-gold-light/70">
+            <path d="M6 0 12 6 6 12 0 6z" />
+          </svg>
+          <span className="h-px flex-1 bg-gold-light/30" />
+        </div>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <SidebarLinks />
         </div>
 
-        <div className="relative mt-auto overflow-hidden rounded-[3px] border border-rule bg-ivory/60 px-4 pt-4 pb-5">
-          <Sprig className="pointer-events-none absolute -right-10 -bottom-5 w-28 opacity-60" flip="x" />
-          <p className="label-caps text-[10px]">Countdown</p>
-          <p className="num mt-1 font-display text-4xl leading-none">{daysToGo.toLocaleString("en-US")}</p>
-          <p className="mt-1 text-xs text-muted">days until we say I do</p>
+        <div className="relative mt-8 overflow-hidden rounded-[3px] border border-ivory/10 bg-ivory/[0.04] px-4 pt-4 pb-5">
+          <Sprig className="pointer-events-none absolute -right-10 -bottom-5 w-28 opacity-40" flip="x" />
+          <p className="text-[10px] font-medium tracking-[0.2em] text-gold-light uppercase">Countdown</p>
+          <p className="num mt-1.5 font-display text-[44px] leading-none">{daysToGo.toLocaleString("en-US")}</p>
+          <p className="mt-1 font-display text-[15px] text-ivory/75 italic">days until we say I do</p>
         </div>
       </aside>
 
       <div className="min-w-0 pb-24 md:pb-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-rule bg-paper/95 px-4 py-3 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-chocolate px-4 py-3 text-ivory md:hidden">
           <Link href="/" className="flex items-center gap-2.5">
-            <Monogram first={settings.partnerOneName} second={settings.partnerTwoName} size="sm" />
+            <Monogram first={settings.partnerOneName} second={settings.partnerTwoName} size="sm" tone="dark" />
             <span className="font-display text-lg leading-none">{names}</span>
           </Link>
-          <span className="num text-right text-xs leading-tight text-muted">
-            <span className="block font-display text-lg text-chocolate">{daysToGo.toLocaleString("en-US")}</span>
+          <span className="num text-right text-xs leading-tight text-ivory/70">
+            <span className="block font-display text-lg text-ivory">{daysToGo.toLocaleString("en-US")}</span>
             days to go
           </span>
         </header>

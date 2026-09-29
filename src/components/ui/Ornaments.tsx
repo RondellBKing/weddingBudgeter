@@ -1,18 +1,32 @@
 // Stationery details: the couple's monogram, a botanical sprig, and a small gold divider.
 
 /** Initials in a fine double gold ring, like the crest on an invitation. */
-export function Monogram({ first, second, size = "md" }: { first: string; second: string; size?: "sm" | "md" | "lg" }) {
+export function Monogram({
+  first,
+  second,
+  size = "md",
+  tone = "light",
+}: {
+  first: string;
+  second: string;
+  size?: "sm" | "md" | "lg";
+  /** "dark" for the chocolate masthead and cover. */
+  tone?: "light" | "dark";
+}) {
   const dims = { sm: "size-11 text-base", md: "size-14 text-xl", lg: "size-24 text-4xl" }[size];
   const inset = size === "lg" ? "inset-[5px]" : "inset-[3px]";
+  const dark = tone === "dark";
   return (
     <span
       aria-hidden
-      className={`relative inline-grid shrink-0 place-items-center rounded-full border border-gold/70 font-display text-chocolate ${dims}`}
+      className={`relative inline-grid shrink-0 place-items-center rounded-full border font-display ${
+        dark ? "border-gold-light/70 text-ivory" : "border-gold/70 text-chocolate"
+      } ${dims}`}
     >
-      <span className={`absolute ${inset} rounded-full border border-gold/35`} />
+      <span className={`absolute ${inset} rounded-full border ${dark ? "border-gold-light/35" : "border-gold/35"}`} />
       <span className="relative leading-none">
         {first.charAt(0).toUpperCase()}
-        <em className="mx-[0.06em] text-[0.8em] text-rose-ink italic">&amp;</em>
+        <em className={`mx-[0.06em] text-[0.8em] italic ${dark ? "text-dusty-rose" : "text-rose-ink"}`}>&amp;</em>
         {second.charAt(0).toUpperCase()}
       </span>
     </span>

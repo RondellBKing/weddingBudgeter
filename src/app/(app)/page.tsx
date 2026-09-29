@@ -5,8 +5,7 @@ import { TaskCheck } from "@/components/tasks/TaskCheck";
 import { Card, CardHeading } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { Meter } from "@/components/ui/Meter";
-import { Divider, Sprig } from "@/components/ui/Ornaments";
-import { PageTitle } from "@/components/ui/PageTitle";
+import { Sprig } from "@/components/ui/Ornaments";
 import { Legend, Ring } from "@/components/ui/Ring";
 import { ToneBadge, toneText, type Tone } from "@/components/ui/Tone";
 import { TickBox } from "@/components/ui/TickBox";
@@ -48,47 +47,94 @@ export default async function DashboardPage() {
 
   return (
     <div className="grid gap-8 sm:gap-10">
-      <PageTitle
-        word="Dashboard"
-        eyebrow={greetingFor(settings.timezone)}
-        intro={`${formatDate(today, "weekday-long")}. Here's where the wedding stands today.`}
-      />
+      {/* The cover */}
+      <section aria-labelledby="cover-h" className="relative overflow-hidden rounded-[3px] bg-chocolate text-ivory shadow-[0_18px_40px_-24px_rgba(62,43,34,0.7)]">
+        <Sprig className="pointer-events-none absolute -top-4 -left-10 w-52 opacity-30 sm:w-72" />
+        <Sprig flip="xy" className="pointer-events-none absolute -right-10 -bottom-4 w-52 opacity-25 sm:w-72" />
+        <span aria-hidden className="pointer-events-none absolute inset-3 rounded-[2px] border border-gold-light/20" />
 
-      {/* The save-the-date */}
-      <Card framed as="section" aria-label="The wedding" className="overflow-hidden px-6 py-12 text-center sm:px-12 sm:py-14">
-        <Sprig className="pointer-events-none absolute -top-3 -left-8 w-44 opacity-90 sm:w-60" />
-        <Sprig flip="xy" className="pointer-events-none absolute -right-8 -bottom-3 w-44 opacity-90 sm:w-60" />
-        <div className="relative mx-auto grid max-w-2xl justify-items-center gap-5">
-          <p className="label-caps tracking-[0.28em] text-rose-ink">The wedding of</p>
-          <h2 className="text-[46px] leading-[0.95] sm:text-[76px]">
-            {settings.partnerOneName} <em className="text-rose-ink italic">&amp;</em> {settings.partnerTwoName}
-          </h2>
-          <Divider className="w-40 sm:w-56" />
-          <p className="text-[12px] font-medium tracking-[0.3em] text-cocoa uppercase">
-            {formatDate(settings.weddingDate, "weekday-long").replace(/, /g, " · ")}
-          </p>
-          <p className="font-display text-xl text-balance text-cocoa italic sm:text-2xl">
-            {settings.venueName}, {settings.venueAddress.replace(/ (?=\S+,)/, "\u00a0")}
-          </p>
+        <div className="relative grid gap-10 px-7 pt-12 pb-10 sm:px-12 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-16">
+          <div className="grid gap-5">
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] font-medium tracking-[0.28em] text-gold-light uppercase">
+              <span>{greetingFor(settings.timezone)}</span>
+              <span aria-hidden className="h-px w-6 bg-gold-light/50" />
+              <span>{formatDate(today, "weekday-long")}</span>
+            </p>
+            <p className="font-display text-[20px] text-ivory/80 italic">The wedding of</p>
+            <h1 id="cover-h" className="text-[54px] leading-[0.9] tracking-[-0.015em] sm:text-[88px] lg:text-[104px]">
+              {settings.partnerOneName} <em className="text-dusty-rose italic">&amp;</em> {settings.partnerTwoName}
+            </h1>
+            <div aria-hidden className="flex w-56 items-center gap-3">
+              <span className="h-px flex-1 bg-gold-light/50" />
+              <svg viewBox="0 0 12 12" className="size-2.5 fill-gold-light">
+                <path d="M6 0 12 6 6 12 0 6z" />
+              </svg>
+              <span className="h-px flex-1 bg-gold-light/50" />
+            </div>
+            <p className="text-[12px] font-medium tracking-[0.3em] text-ivory/90 uppercase">
+              {formatDate(settings.weddingDate, "weekday-long").replace(/, /g, " · ")}
+            </p>
+            <p className="font-display text-[21px] text-balance text-ivory/80 italic sm:text-[24px]">
+              {settings.venueName}, {settings.venueAddress.replace(/ (?=\S+,)/, "\u00a0")}
+            </p>
+          </div>
 
-          <dl className="mt-4 grid w-full max-w-md grid-cols-3 border-y border-rule">
+          <dl className="grid grid-cols-3 border-y border-ivory/15 lg:w-[19rem] lg:grid-cols-1 lg:border-y-0 lg:border-l lg:pl-10">
             {[
-              [d.daysToGo, "days"],
+              [d.daysToGo, "days to go"],
               [weeks, "weeks"],
               [d.untilWedding.months, "months"],
             ].map(([n, label], i) => (
-              <div key={label} className={`grid gap-1 py-4 ${i > 0 ? "border-l border-rule" : ""}`}>
+              <div
+                key={label}
+                className={`grid gap-1 py-4 text-center lg:py-3 lg:text-left ${i > 0 ? "border-l border-ivory/15 lg:border-t lg:border-l-0" : ""}`}
+              >
                 <dt className="sr-only">{label}</dt>
-                <dd className="num font-display text-4xl leading-none sm:text-5xl">{Number(n).toLocaleString("en-US")}</dd>
-                <dd className="label-caps text-[10px]">{label}</dd>
+                <dd className={`num font-display leading-none ${i === 0 ? "text-[44px] sm:text-[64px]" : "text-[36px] sm:text-[40px]"}`}>
+                  {Number(n).toLocaleString("en-US")}
+                </dd>
+                <dd className="text-[10px] font-medium tracking-[0.2em] text-gold-light uppercase">{label}</dd>
               </div>
             ))}
           </dl>
-          <p className="text-sm text-muted">
-            {d.untilWedding.months} months and {d.untilWedding.days} days to go. Rehearsal dinner the evening before.
-          </p>
         </div>
-      </Card>
+
+        {/* Next up */}
+        <div className="relative grid border-t border-ivory/12 sm:grid-cols-3">
+          {[
+            {
+              label: "Next milestone",
+              title: d.nextMilestone?.title ?? "Every milestone is done",
+              detail: d.nextMilestone ? `${formatDate(d.nextMilestone.date, "month-day")} · ${relativeDays(d.nextMilestone.daysUntil).toLowerCase()}` : null,
+              href: "/planning",
+            },
+            {
+              label: "Next payment",
+              title: next ? `${formatCents(next.amountCents ?? 0)} · ${next.item.vendorName ?? next.item.description}` : "Nothing due",
+              detail: next ? `${formatDate(next.payment.dueDate, "month-day")} · ${relativeDays(next.daysUntil).toLowerCase()}` : null,
+              href: "/budget?view=schedule",
+            },
+            {
+              label: "Next appointment",
+              title: d.nextAppointment?.title ?? "Nothing in the next 30 days",
+              detail: d.nextAppointment ? [formatDate(d.nextAppointment.date, "month-day"), d.nextAppointment.time].filter(Boolean).join(" · ") : null,
+              href: "/calendar",
+            },
+          ].map((t, i) => (
+            <Link
+              key={t.label}
+              href={t.href}
+              className={`group grid content-start gap-1.5 px-7 py-5 transition-colors hover:bg-ivory/[0.04] sm:px-8 ${
+                i > 0 ? "border-t border-ivory/12 sm:border-t-0 sm:border-l" : ""
+              }`}
+            >
+              <span className="text-[10px] font-medium tracking-[0.2em] text-gold-light uppercase">{t.label}</span>
+              <span className="font-display text-[20px] leading-snug text-ivory group-hover:text-dusty-rose">{t.title}</span>
+              {t.detail ? <span className="text-[12.5px] text-ivory/70">{t.detail}</span> : null}
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {d.tasksDueSoon.length > 0 || d.overduePayments.length > 0 || d.deadlinesDueSoon.length > 0 || d.thankYousOwed > 0 ? (
         <Card className="grid gap-4 border-l-2 border-l-brick p-6 sm:p-7" aria-labelledby="attention-h">
