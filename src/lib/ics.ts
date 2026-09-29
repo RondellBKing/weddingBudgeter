@@ -196,6 +196,8 @@ export type FeedInput = {
     notes: string | null;
     updatedAt?: Date | null;
   }>;
+  /** Open planner deadlines: hotel block cutoffs, décor return-by dates. */
+  deadlines?: Array<{ id: string; date: CalendarDate; title: string; detail: string | null }>;
 };
 
 function lines(...parts: Array<string | null | undefined | false>): string {
@@ -271,5 +273,16 @@ function buildFeedEvents(input: FeedInput, opts: { includeAmounts: boolean }): I
     return [];
   });
 
-  return [wedding, ...payments, ...events, ...tasks];
+  const deadlines = (input.deadlines ?? []).map(
+    (d): IcsEvent => ({
+      uid: `deadline-${d.id}@wedding-hq`,
+      kind: "date",
+      date: d.date,
+      summary: `Deadline: ${d.title}`,
+      description: d.detail,
+      transparent: true,
+    }),
+  );
+
+  return [wedding, ...payments, ...events, ...tasks, ...deadlines];
 }

@@ -9,10 +9,12 @@ import { sortByTime } from "../domain/calendar-grid";
 import { instantToZoned } from "../domain/zoned-time";
 import { buildIcs, feedEvents, tokensMatch, type FeedInput } from "../ics";
 import { EVENT_TYPE_LABEL, OWNER_LABEL } from "../labels";
+import { queryPlannerDeadlines } from "./planner-deadlines";
 import { computePlan, loadPlan } from "./plan";
 
-// The calendar is a union of three sources merged at read time: appointments (CalendarEvent),
-// payment due dates (unpaid Payment rows) and task due dates. Nothing is copied.
+// The calendar is a union of sources merged at read time: appointments (CalendarEvent),
+// payment due dates (unpaid Payment rows), task due dates, and planner deadlines (hotel block
+// cutoffs, décor return-by dates). Nothing is copied.
 
 /** The seeded "Wedding day" task. Views that draw the wedding day themselves skip it. */
 const WEDDING_TASK_SEED_KEY = "wedding-day";
@@ -78,12 +80,13 @@ export async function loadCalendar() {
   await requireSession();
   const plan = await loadPlan();
   const { settings, today } = plan;
-  const [tasks, eventRows] = await Promise.all([
+  const [tasks, eventRows, deadlines] = await Promise.all([
     prisma.task.findMany({
       where: { dueDate: { not: null } },
       select: { id: true, title: true, dueDate: true, isMilestone: true, status: true, seedKey: true, vendor: { select: { name: true } } },
     }),
     prisma.calendarEvent.findMany({ include: { vendor: { select: { name: true } } } }),
+    queryPlannerDeadlines(today),
   ]);
 
   const events = new Map(eventRows.map((e) => [`event:${e.id}`, eventInfo(e, settings.timezone)]));
@@ -118,6 +121,7 @@ export async function loadCalendar() {
         time: e.timeLabel ?? undefined,
         detail: [e.typeLabel, e.location].filter(Boolean).join(" · "),
       })),
+      deadlines,
     },
     today,
     { includeDone: true },
@@ -187,9 +191,10 @@ export async function loadCalendarFeed(token: string, opts: { includeAmounts: bo
   const s = plan.settings;
   const ctx = { headcountOverageCents: plan.headroom.overageCents };
 
-  const [tasks, events] = await Promise.all([
+  const [tasks, events, deadlines] = await Promise.all([
     prisma.task.findMany({ where: { status: { not: "DONE" }, dueDate: { not: null } }, orderBy: [{ dueDate: "asc" }, { title: "asc" }] }),
     prisma.calendarEvent.findMany({ include: { vendor: { select: { name: true } } }, orderBy: [{ allDayDate: "asc" }, { startAt: "asc" }] }),
+    queryPlannerDeadlines(plan.today),
   ]);
 
   const input: FeedInput = {
@@ -231,6 +236,7 @@ export async function loadCalendarFeed(token: string, opts: { includeAmounts: bo
       notes: e.notes,
       updatedAt: e.updatedAt,
     })),
+    deadlines: deadlines.filter((d) => !d.done).map((d) => ({ id: d.id, date: d.date, title: d.title, detail: d.detail ?? null })),
   };
 
   return buildIcs({

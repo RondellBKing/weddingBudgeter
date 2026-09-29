@@ -62,13 +62,22 @@ describe("merged agenda", () => {
         { id: "t3", dueDate: null, title: "Someday", isMilestone: false, done: false },
       ],
       events: [{ id: "e1", date: cd("2026-11-02"), title: "Tasting", time: "18:00" }],
+      deadlines: [
+        { id: "hotel-h1", date: cd("2026-10-19"), title: "Hotel block cutoff: Marriott", done: false },
+        { id: "decor-d1", date: cd("2026-10-01"), title: "Return lanterns", done: true },
+      ],
     },
     today,
   );
 
-  it("merges all three sources in date order, milestones first on a shared day", () => {
-    expect(agenda.map((a) => a.id)).toEqual(["task:t1", "task:t2", "payment:p2", "event:e1"]);
+  it("merges every source in date order, milestones then payments then deadlines on a shared day", () => {
+    expect(agenda.map((a) => a.id)).toEqual(["task:t1", "task:t2", "payment:p2", "deadline:hotel-h1", "event:e1"]);
     expect(agenda[1].kind).toBe("milestone");
+    expect(agenda[3].kind).toBe("deadline");
+  });
+
+  it("leaves out deadlines that are already done", () => {
+    expect(agenda.find((a) => a.id === "deadline:decor-d1")).toBeUndefined();
   });
 
   it("leaves out paid payments and undated tasks by default", () => {
@@ -79,7 +88,7 @@ describe("merged agenda", () => {
   it("groups by month with readable labels", () => {
     const groups = groupByMonth(agenda);
     expect(groups.map((g) => [g.label, g.items.length])).toEqual([
-      ["October 2026", 3],
+      ["October 2026", 4],
       ["November 2026", 1],
     ]);
   });

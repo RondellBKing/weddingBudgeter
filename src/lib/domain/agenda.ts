@@ -1,9 +1,10 @@
 import { compareDates, dueState, formatDate, monthKey, type CalendarDate, type DueState } from "../dates";
 
-// The calendar is a union of three sources merged at read time: appointments, payment due
-// dates and task due dates. Nothing is copied into a second table to make this work.
+// The calendar is a union of sources merged at read time: appointments, payment due dates,
+// task due dates and planner deadlines (hotel cutoffs, décor returns). Nothing is copied into a
+// second table to make this work.
 
-export type AgendaKind = "payment" | "task" | "milestone" | "event";
+export type AgendaKind = "payment" | "task" | "milestone" | "event" | "deadline";
 
 export type AgendaItem = {
   id: string;
@@ -22,9 +23,10 @@ export type AgendaSources = {
   payments: Array<{ id: string; dueDate: CalendarDate; paidDate: CalendarDate | null; title: string; detail?: string; amountCents: number | null }>;
   tasks: Array<{ id: string; dueDate: CalendarDate | null; title: string; isMilestone: boolean; done: boolean; detail?: string }>;
   events: Array<{ id: string; date: CalendarDate; title: string; time?: string; detail?: string }>;
+  deadlines?: Array<{ id: string; date: CalendarDate; title: string; detail?: string; done: boolean }>;
 };
 
-const KIND_ORDER: Record<AgendaKind, number> = { milestone: 0, payment: 1, event: 2, task: 3 };
+const KIND_ORDER: Record<AgendaKind, number> = { milestone: 0, payment: 1, deadline: 2, event: 3, task: 4 };
 
 export function buildAgenda(
   src: AgendaSources,
@@ -66,6 +68,17 @@ export function buildAgenda(
       detail: e.detail,
       done: compareDates(e.date, today) < 0,
       state: dueState(e.date, today),
+    });
+  }
+  for (const d of src.deadlines ?? []) {
+    items.push({
+      id: `deadline:${d.id}`,
+      date: d.date,
+      kind: "deadline",
+      title: d.title,
+      detail: d.detail,
+      done: d.done,
+      state: dueState(d.date, today),
     });
   }
   return items

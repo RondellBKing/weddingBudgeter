@@ -179,6 +179,7 @@ describe("what the feed contains", () => {
       { id: "e1", title: "Menu tasting", typeLabel: "Tasting", allDayDate: null, startAt: new Date("2027-12-13T23:00:00Z"), endAt: null, location: "The Estate", vendorName: "The Estate at Florentine Gardens", notes: "Bring the seating ideas" },
       { id: "e2", title: "Dress shopping", typeLabel: "Fitting", allDayDate: cd("2027-02-06"), startAt: null, endAt: null, location: null, vendorName: null, notes: null },
     ],
+    deadlines: [{ id: "hotel-h1", date: cd("2028-03-13"), title: "Hotel block cutoff: Marriott", detail: "Last day for the group rate" }],
   };
 
   it("includes the wedding day, payments, appointments and open tasks with stable UIDs", () => {
@@ -192,7 +193,14 @@ describe("what the feed contains", () => {
       "task-t0@wedding-hq",
       "task-t1@wedding-hq",
       "task-t2@wedding-hq",
+      "deadline-hotel-h1@wedding-hq",
     ]);
+  });
+
+  it("puts planner deadlines on the phone as all-day reminders", () => {
+    const dl = feedEvents(input, { includeAmounts: true }).find((e) => e.uid === "deadline-hotel-h1@wedding-hq")!;
+    expect(dl.kind).toBe("date");
+    expect(dl.summary).toBe("Deadline: Hotel block cutoff: Marriott");
   });
 
   it("hides dollar amounts typed into titles and notes when amounts are off", () => {

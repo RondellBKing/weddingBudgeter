@@ -20,6 +20,7 @@ const KIND: Record<AgendaKind, { label: string; dot: string }> = {
   payment: { label: "Payment", dot: "bg-gold" },
   event: { label: "Appointment", dot: "bg-garden" },
   task: { label: "Task", dot: "border border-desert-rose bg-paper" },
+  deadline: { label: "Deadline", dot: "bg-cocoa" },
 };
 
 function stateTone(state: DueState): Tone {
@@ -87,7 +88,7 @@ export default async function DashboardPage() {
         </div>
       </Card>
 
-      {d.tasksDueSoon.length > 0 || d.overduePayments.length > 0 ? (
+      {d.tasksDueSoon.length > 0 || d.overduePayments.length > 0 || d.deadlinesDueSoon.length > 0 || d.thankYousOwed > 0 ? (
         <Card className="grid gap-4 border-l-2 border-l-brick p-6 sm:p-7" aria-labelledby="attention-h">
           <CardHeading id="attention-h" title="Needs attention" action={<MoreLink href="/tasks">Tasks</MoreLink>} />
           <ul className="grid">
@@ -106,6 +107,22 @@ export default async function DashboardPage() {
                 <ToneBadge tone={t.state === "overdue" ? "overdue" : "due-soon"}>{relativeDays(t.daysUntil)}</ToneBadge>
               </li>
             ))}
+            {d.deadlinesDueSoon.map((dl) => (
+              <li key={dl.id} className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5 last:border-b-0">
+                <Link href={dl.href} className="min-w-0 hover:text-rose-ink">
+                  {dl.title}
+                </Link>
+                <ToneBadge tone={dl.daysUntil < 0 ? "overdue" : "due-soon"}>{relativeDays(dl.daysUntil)}</ToneBadge>
+              </li>
+            ))}
+            {d.thankYousOwed > 0 ? (
+              <li className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5 last:border-b-0">
+                <Link href="/gifts" className="min-w-0 hover:text-rose-ink">
+                  {d.thankYousOwed === 1 ? "1 thank-you note to write" : `${d.thankYousOwed} thank-you notes to write`}
+                </Link>
+                <ToneBadge tone="neutral">Gifts</ToneBadge>
+              </li>
+            ) : null}
           </ul>
         </Card>
       ) : null}

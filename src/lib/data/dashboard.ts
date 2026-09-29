@@ -16,6 +16,7 @@ import { prisma } from "../db";
 import { sizingRollup, sizingUrgency } from "../domain/party-sizing";
 import { coverage } from "../domain/vendors";
 import { loadPlan } from "./plan";
+import { queryPlannerDeadlines } from "./planner-deadlines";
 
 export type DashboardTask = {
   id: string;
@@ -31,7 +32,7 @@ export async function loadDashboard() {
   const { today, settings } = plan;
   const weekAhead = addDays(today, 7);
 
-  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount, agendaTasks, events, vendors] = await Promise.all([
+  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount, agendaTasks, events, vendors, deadlines, thankYousOwed] = await Promise.all([
     prisma.task.findMany({
       where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(weekAhead) } },
       orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
@@ -74,6 +75,8 @@ export async function loadDashboard() {
       include: { vendor: { select: { name: true } } },
     }),
     prisma.vendor.findMany({ select: { name: true, category: true, alsoCovers: true, status: true } }),
+    queryPlannerDeadlines(today),
+    prisma.gift.count({ where: { thankYouSentOn: null } }),
   ]);
 
   const toTask = (t: (typeof dueSoon)[number]): DashboardTask => {
@@ -130,10 +133,17 @@ export async function loadDashboard() {
         time: e.startAt ? formatInstant(e.startAt, settings.timezone, { hour: "numeric", minute: "2-digit" }) : undefined,
         detail: e.location ?? undefined,
       })),
+      deadlines,
     },
     today,
     { until: addDays(today, 120) },
   ).slice(0, 7);
+
+  // Planner deadlines (hotel cutoffs, décor returns) this week or already missed.
+  const deadlinesDueSoon = deadlines
+    .filter((dl) => !dl.done && daysBetween(today, dl.date) <= 7)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((dl) => ({ ...dl, daysUntil: daysBetween(today, dl.date), href: dl.id.startsWith("hotel-") ? "/travel" : "/design" }));
 
   // Appointments in the next 30 days, in New York time.
   const appointments = events
@@ -161,6 +171,8 @@ export async function loadDashboard() {
     categoriesBooked: cover.filter((c) => c.booked.length > 0).length,
     categoriesTotal: cover.length,
     overduePayments: plan.nextPayments.filter((p) => p.state === "overdue"),
+    deadlinesDueSoon,
+    thankYousOwed,
     daysToGo: daysBetween(today, settings.weddingDate),
     untilWedding: monthsAndDaysBetween(today, settings.weddingDate),
     tasksDueSoon: dueSoon.filter((t) => t.dueDate).map(toTask),
