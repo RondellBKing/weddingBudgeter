@@ -1,30 +1,16 @@
 import Link from "next/link";
 import { ChildrenLine, ChoiceTable, DietaryList, HeadcountNote, VendorMealList } from "@/components/meals/MealParts";
-import { PrintButton } from "@/components/seating/PrintButton";
+import { PrintButton } from "@/components/ui/PrintButton";
 import { Icon } from "@/components/ui/Icon";
 import { requireSession } from "@/lib/auth/require-session";
 import { loadMeals } from "@/lib/data/meals";
 import { formatDate } from "@/lib/dates";
+import { printCss } from "@/components/ui/print-css";
 
 export const metadata = { title: "Meal Counts" };
 
-// When printing, hide the app around this page (sidebar, phone header and bottom bar, banners)
-// by hiding everything that isn't <main> or one of its ancestors. Same approach as the seating
-// chart printout; scoped to this page only.
-const PRINT_CSS = `
-@media print {
-  @page { size: letter portrait; margin: 0.5in; }
-  html, body { background: #fff !important; }
-  *:has(> * > #main) { display: block !important; min-height: 0 !important; padding: 0 !important; }
-  *:has(> * > #main) > :not(:has(#main)) { display: none !important; }
-  *:has(> #main) { padding: 0 !important; }
-  *:has(> #main) > :not(#main) { display: none !important; }
-  #main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-  .meals-print, .meals-print * { color: #000 !important; box-shadow: none !important; }
-  .meals-print .print-rule { border-color: #8c8c8c !important; }
-  .meals-print .print-hair { border-color: #c8c8c8 !important; }
-}
-`;
+// Printing hides the app around this page; see printCss.
+const PRINT_CSS = printCss("meals-print");
 
 const n = (x: number) => x.toLocaleString("en-US");
 

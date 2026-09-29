@@ -2,8 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { MoveButtons } from "@/components/music/MoveButtons";
-import { RowLayout } from "@/components/music/RowLayout";
+import { MoveButtons } from "@/components/ui/MoveButtons";
+import { RowLayout } from "@/components/ui/RowLayout";
 import { ConfirmButton } from "@/components/form/ConfirmButton";
 import { CheckboxField, FormMessage, SelectField, TextField } from "@/components/form/Fields";
 import { SubmitButton } from "@/components/form/SubmitButton";

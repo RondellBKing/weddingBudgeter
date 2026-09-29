@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PrintButton } from "@/components/seating/PrintButton";
+import { PrintButton } from "@/components/ui/PrintButton";
 import { Icon } from "@/components/ui/Icon";
 import { requireSession } from "@/lib/auth/require-session";
 import { loadPlan } from "@/lib/data/plan";
@@ -7,25 +7,12 @@ import { loadSeatingPrint, type PrintGuest } from "@/lib/data/seating";
 import { formatDate } from "@/lib/dates";
 import { capacityStatus, guestIndex, guestsByTable, orderAtTable, seatingCounts, surnameFirst } from "@/lib/domain/seating";
 import { TABLE_SHAPE_LABEL } from "@/lib/labels";
+import { printCss } from "@/components/ui/print-css";
 
 export const metadata = { title: "Seating Chart" };
 
-// When printing, hide the app around this page (sidebar, phone header and bottom bar, banners)
-// by hiding everything that isn't <main> or one of its ancestors. Scoped to this page only.
-const PRINT_CSS = `
-@media print {
-  @page { size: letter portrait; margin: 0.5in; }
-  html, body { background: #fff !important; }
-  *:has(> * > #main) { display: block !important; min-height: 0 !important; padding: 0 !important; }
-  *:has(> * > #main) > :not(:has(#main)) { display: none !important; }
-  *:has(> #main) { padding: 0 !important; }
-  *:has(> #main) > :not(#main) { display: none !important; }
-  #main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-  .seating-print, .seating-print * { color: #000 !important; box-shadow: none !important; }
-  .seating-print .print-rule { border-color: #8c8c8c !important; }
-  .seating-print .print-hair { border-color: #c8c8c8 !important; }
-}
-`;
+// Printing hides the app around this page; see printCss.
+const PRINT_CSS = printCss("seating-print");
 
 function Note({ guest }: { guest: PrintGuest }) {
   const bits = [guest.isChild ? "Child" : null, guest.mealChoice, guest.dietaryNotes].filter(Boolean);

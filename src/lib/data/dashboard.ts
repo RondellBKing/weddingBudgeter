@@ -14,6 +14,8 @@ import {
 import { buildAgenda } from "../domain/agenda";
 import { prisma } from "../db";
 import { sizingRollup, sizingUrgency } from "../domain/party-sizing";
+import { KEY_MOMENTS, stillToChoose } from "../domain/music";
+import { vendorsMissingArrival } from "../domain/timeline";
 import { coverage } from "../domain/vendors";
 import { loadPlan } from "./plan";
 import { queryPlannerDeadlines } from "./planner-deadlines";
@@ -32,7 +34,24 @@ export async function loadDashboard() {
   const { today, settings } = plan;
   const weekAhead = addDays(today, 7);
 
-  const [dueSoon, nextTask, taskCounts, party, guestCount, seatedCount, agendaTasks, events, vendors, deadlines, thankYousOwed] = await Promise.all([
+  const [
+    dueSoon,
+    nextTask,
+    taskCounts,
+    party,
+    guestCount,
+    seatedCount,
+    agendaTasks,
+    events,
+    vendors,
+    deadlines,
+    thankYousOwed,
+    rainPlan,
+    weddingDayMoments,
+    songs,
+    shots,
+    mustHaveShots,
+  ] = await Promise.all([
     prisma.task.findMany({
       where: { status: { not: "DONE" }, dueDate: { lte: toDbDate(weekAhead) } },
       orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
@@ -74,9 +93,14 @@ export async function loadDashboard() {
       },
       include: { vendor: { select: { name: true } } },
     }),
-    prisma.vendor.findMany({ select: { name: true, category: true, alsoCovers: true, status: true } }),
+    prisma.vendor.findMany({ select: { id: true, name: true, category: true, alsoCovers: true, status: true, arrivalTime: true } }),
     queryPlannerDeadlines(today),
     prisma.gift.count({ where: { thankYouSentOn: null } }),
+    prisma.weddingSettings.findUnique({ where: { id: 1 }, select: { rainPlan: true } }),
+    prisma.timelineItem.count({ where: { date: toDbDate(settings.weddingDate) } }),
+    prisma.songRequest.findMany({ select: { moment: true } }),
+    prisma.shotListItem.count(),
+    prisma.shotListItem.count({ where: { isMustHave: true } }),
   ]);
 
   const toTask = (t: (typeof dueSoon)[number]): DashboardTask => {
@@ -173,6 +197,16 @@ export async function loadDashboard() {
     overduePayments: plan.nextPayments.filter((p) => p.state === "overdue"),
     deadlinesDueSoon,
     thankYousOwed,
+    weddingDay: {
+      ceremonyTime: settings.ceremonyTime,
+      moments: weddingDayMoments,
+      hasRainPlan: Boolean(rainPlan?.rainPlan?.trim()),
+      keySongsChosen: KEY_MOMENTS.length - stillToChoose(songs).length,
+      keySongsTotal: KEY_MOMENTS.length,
+      shots,
+      mustHaveShots,
+      vendorsWithoutArrival: vendorsMissingArrival(vendors).length,
+    },
     daysToGo: daysBetween(today, settings.weddingDate),
     untilWedding: monthsAndDaysBetween(today, settings.weddingDate),
     tasksDueSoon: dueSoon.filter((t) => t.dueDate).map(toTask),

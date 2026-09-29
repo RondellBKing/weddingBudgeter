@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PrintButton } from "@/components/seating/PrintButton";
+import { PrintButton } from "@/components/ui/PrintButton";
 import { Icon } from "@/components/ui/Icon";
 import { requireSession } from "@/lib/auth/require-session";
 import { loadBinder } from "@/lib/data/timeline";
@@ -15,32 +15,21 @@ import {
 } from "@/lib/domain/timeline";
 import { telHref } from "@/lib/domain/vendor-contact";
 import { VENDOR_CATEGORY_LABEL } from "@/lib/domain/vendors";
+import { printCss } from "@/components/ui/print-css";
 
 export const metadata = { title: "Day-of Binder" };
 
-// When printing, hide the app around this page (sidebar, phone header and bottom bar, banners)
-// by hiding everything that isn't <main> or one of its ancestors. Same approach as the seating
-// chart, scoped to this page only.
-const PRINT_CSS = `
-@media print {
-  @page { size: letter portrait; margin: 0.5in; }
-  html, body { background: #fff !important; }
-  *:has(> * > #main) { display: block !important; min-height: 0 !important; padding: 0 !important; }
-  *:has(> * > #main) > :not(:has(#main)) { display: none !important; }
-  *:has(> #main) { padding: 0 !important; }
-  *:has(> #main) > :not(#main) { display: none !important; }
-  #main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-  .binder-print, .binder-print * { color: #000 !important; box-shadow: none !important; }
+// Printing hides the app around this page; see printCss.
+const PRINT_CSS = printCss(
+  "binder-print",
+  `
   .binder-print a { text-decoration: none !important; }
   /* Chromium can overlap grid rows at a page break, so the long lists flow as blocks on paper. */
   .binder-print article, .binder-print article > section, .binder-print .print-flow,
   .binder-print ol, .binder-print ul { display: block !important; }
   .binder-print article > * + * { margin-top: 0.28in !important; }
-  .binder-print article > section > * + *, .binder-print .print-flow > * + * { margin-top: 6px !important; }
-  .binder-print .print-rule { border-color: #8c8c8c !important; }
-  .binder-print .print-hair { border-color: #c8c8c8 !important; }
-}
-`;
+  .binder-print article > section > * + *, .binder-print .print-flow > * + * { margin-top: 6px !important; }`,
+);
 
 const linkClass = "text-rose-ink underline-offset-4 hover:text-chocolate hover:underline";
 

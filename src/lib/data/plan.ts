@@ -68,7 +68,7 @@ export async function computePlan(): Promise<Plan> {
   if (!s) throw new NotSeededError();
   const today = todayIn(s.timezone);
 
-  const [categories, items, guestsNotDeclined, anyGuests, vendorMeals, demoCounts] = await Promise.all([
+  const [categories, items, guestsNotDeclined, anyGuests, vendorMeals, demo] = await Promise.all([
     prisma.budgetCategory.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.budgetItem.findMany({
       include: { payments: true, vendor: { select: { name: true } } },
@@ -77,13 +77,23 @@ export async function computePlan(): Promise<Plan> {
     prisma.guest.count({ where: { OR: [{ rsvpStatus: null }, { rsvpStatus: { not: "DECLINED" } }] } }),
     prisma.guest.count(),
     prisma.vendor.aggregate({ where: { status: "BOOKED" }, _sum: { mealsRequired: true } }),
-    Promise.all([
-      prisma.vendor.count({ where: { isDemo: true } }),
-      prisma.guest.count({ where: { isDemo: true } }),
-      prisma.task.count({ where: { isDemo: true } }),
-      prisma.calendarEvent.count({ where: { isDemo: true } }),
-      prisma.budgetItem.count({ where: { isDemo: true } }),
-    ]),
+    // Any sample row anywhere, in one round trip (this runs on every page).
+    prisma.$queryRaw<Array<{ any: boolean }>>`
+      SELECT EXISTS (SELECT 1 FROM "Vendor" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "Guest" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "Task" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "CalendarEvent" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "BudgetItem" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "TimelineItem" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "SongRequest" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "ProcessionalEntry" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "ShotListItem" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "InspirationItem" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "DecorItem" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "HotelBlock" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "ShuttleRun" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "WelcomeBagItem" WHERE "isDemo")
+          OR EXISTS (SELECT 1 FROM "Gift" WHERE "isDemo") AS "any"`,
   ]);
 
   const settings: Plan["settings"] = {
@@ -168,7 +178,7 @@ export async function computePlan(): Promise<Plan> {
     budget,
     items: itemRows,
     nextPayments: upcomingPayments(itemRows, ctx, today, 5),
-    hasDemoData: demoCounts.some((n) => n > 0),
+    hasDemoData: demo[0]?.any === true,
   };
 }
 

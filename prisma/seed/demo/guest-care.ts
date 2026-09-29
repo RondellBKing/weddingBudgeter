@@ -25,6 +25,7 @@ export async function seedDemoGuestCare(db: Db): Promise<Record<string, number>>
         category: "TRANSPORT",
         status: "BOOKED",
         mealsRequired: 2,
+        arrivalTime: "14:30",
         notes: "Sample vendor. Two drivers stay on site between the evening runs.",
         isDemo: true,
       },

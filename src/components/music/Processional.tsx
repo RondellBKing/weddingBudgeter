@@ -7,8 +7,8 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import type { ProcessionalView } from "@/lib/data/music";
 import { idleState, type ActionState } from "@/lib/forms";
-import { MoveButtons } from "./MoveButtons";
-import { RowLayout } from "./RowLayout";
+import { MoveButtons } from "@/components/ui/MoveButtons";
+import { RowLayout } from "@/components/ui/RowLayout";
 
 type SaveAction = (prev: ActionState, form: FormData) => Promise<ActionState>;
 type FormAction = (form: FormData) => void | Promise<void>;

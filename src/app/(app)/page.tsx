@@ -9,7 +9,7 @@ import { PageTitle } from "@/components/ui/PageTitle";
 import { Legend, Ring } from "@/components/ui/Ring";
 import { ToneBadge, toneText, type Tone } from "@/components/ui/Tone";
 import { loadDashboard } from "@/lib/data/dashboard";
-import { daysBetween, formatDate, greetingFor, relativeDays, type DueState } from "@/lib/dates";
+import { daysBetween, formatClockTime, formatDate, greetingFor, relativeDays, type DueState } from "@/lib/dates";
 import type { AgendaKind } from "@/lib/domain/agenda";
 import { formatCents, formatPercent } from "@/lib/money";
 
@@ -394,8 +394,69 @@ export default async function DashboardPage() {
             </ul>
           )}
         </Card>
+
+        <WeddingDayCard day={d.weddingDay} />
       </div>
     </div>
+  );
+}
+
+/** The day-of pieces a planner makes sure exist: each one done, or not yet, with where to do it. */
+function WeddingDayCard({ day }: { day: Awaited<ReturnType<typeof loadDashboard>>["weddingDay"] }) {
+  const rows: Array<{ label: string; value: string; done: boolean; href: string }> = [
+    {
+      label: "Ceremony time",
+      value: day.ceremonyTime ? formatClockTime(day.ceremonyTime) : "Not set",
+      done: Boolean(day.ceremonyTime),
+      href: "/settings",
+    },
+    {
+      label: "Wedding-day timeline",
+      value: day.moments === 0 ? "Not started" : `${day.moments} ${day.moments === 1 ? "moment" : "moments"}`,
+      done: day.moments > 0,
+      href: "/timeline",
+    },
+    { label: "Rain plan", value: day.hasRainPlan ? "Written" : "Not written", done: day.hasRainPlan, href: "/timeline" },
+    {
+      label: "Key songs",
+      value: `${day.keySongsChosen} of ${day.keySongsTotal} chosen`,
+      done: day.keySongsChosen === day.keySongsTotal,
+      href: "/music",
+    },
+    {
+      label: "Shot list",
+      value: day.shots === 0 ? "Not started" : `${day.shots} shots · ${day.mustHaveShots} must-have`,
+      done: day.shots > 0,
+      href: "/photos",
+    },
+    {
+      label: "Vendor arrival times",
+      value: day.vendorsWithoutArrival === 0 ? "All set" : `${day.vendorsWithoutArrival} booked ${day.vendorsWithoutArrival === 1 ? "vendor" : "vendors"} missing`,
+      done: day.vendorsWithoutArrival === 0,
+      href: "/timeline",
+    },
+  ];
+  const done = rows.filter((r) => r.done).length;
+  return (
+    <Card className="grid content-start gap-5 p-6 sm:p-7 lg:col-span-12" aria-labelledby="day-h">
+      <CardHeading id="day-h" title="The wedding day" action={<MoreLink href="/timeline">Timeline</MoreLink>} />
+      <p className="text-sm text-cocoa">
+        {done} of {rows.length} ready. These can wait. They&apos;re here so nothing about the day is a surprise.
+      </p>
+      <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((r) => (
+          <li key={r.label} className="border-b border-rule last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:[&:nth-last-child(-n+3)]:border-b-0">
+            <Link href={r.href} className="flex items-baseline justify-between gap-4 py-3 hover:text-rose-ink">
+              <span className="grid min-w-0 gap-0.5">
+                <span className="label-caps text-[10px]">{r.label}</span>
+                <span className="text-[15px] tabular-nums">{r.value}</span>
+              </span>
+              <ToneBadge tone={r.done ? "on-track" : "neutral"}>{r.done ? "Done" : "Not yet"}</ToneBadge>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 

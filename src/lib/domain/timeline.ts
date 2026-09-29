@@ -149,6 +149,13 @@ export const ARRIVAL_NOUN: Record<VendorCategory, string | null> = {
   OTHER: null,
 };
 
+/** Booked vendors who should have a wedding-day arrival time (not the venue, a hotel block or "other"). */
+export function vendorsMissingArrival<V extends ArrivalVendor>(vendors: V[]): V[] {
+  return vendors.filter(
+    (v) => v.status === "BOOKED" && v.category !== "VENUE" && ARRIVAL_NOUN[v.category] !== null && !isClockTime(v.arrivalTime),
+  );
+}
+
 export type ScheduleRow = {
   key: string;
   /** item: stored and editable. vendor: a booked vendor's arrival. venue: when the venue opens. */

@@ -4,14 +4,9 @@ import { Card, CardHeading } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { ToneBadge } from "@/components/ui/Tone";
 import { formatClockTime } from "@/lib/dates";
-import { isClockTime, type ArrivalVendor } from "@/lib/domain/timeline";
+import { vendorsMissingArrival, type ArrivalVendor } from "@/lib/domain/timeline";
 
 const linkClass = "text-rose-ink underline-offset-4 hover:text-chocolate hover:underline";
-
-/** Booked vendors who should have a wedding-day arrival time (not the venue or a hotel block). */
-export function vendorsMissingArrival(vendors: ArrivalVendor[]): ArrivalVendor[] {
-  return vendors.filter((v) => v.status === "BOOKED" && v.category !== "VENUE" && v.category !== "LODGING" && !isClockTime(v.arrivalTime));
-}
 
 /** The facts the day hangs on: where, when vendors can get in, when the ceremony starts. */
 export function VenueCard({
