@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HeadcountCard } from "@/components/dashboard/HeadcountCard";
+import { TaskCheck } from "@/components/tasks/TaskCheck";
 import { Card, CardHeading } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { Meter } from "@/components/ui/Meter";
@@ -8,6 +9,7 @@ import { Divider, Sprig } from "@/components/ui/Ornaments";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Legend, Ring } from "@/components/ui/Ring";
 import { ToneBadge, toneText, type Tone } from "@/components/ui/Tone";
+import { TickBox } from "@/components/ui/TickBox";
 import { loadDashboard } from "@/lib/data/dashboard";
 import { daysBetween, formatClockTime, formatDate, greetingFor, relativeDays, type DueState } from "@/lib/dates";
 import type { AgendaKind } from "@/lib/domain/agenda";
@@ -102,8 +104,11 @@ export default async function DashboardPage() {
               </li>
             ))}
             {d.tasksDueSoon.map((t) => (
-              <li key={t.id} className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5 last:border-b-0">
-                <span className="min-w-0">{t.title}</span>
+              <li key={t.id} className="flex items-center justify-between gap-4 border-b border-rule py-2 last:border-b-0">
+                <span className="flex min-w-0 items-center gap-2">
+                  <TaskCheck id={t.id} done={false} title={t.title} />
+                  <span className="min-w-0">{t.title}</span>
+                </span>
                 <ToneBadge tone={t.state === "overdue" ? "overdue" : "due-soon"}>{relativeDays(t.daysUntil)}</ToneBadge>
               </li>
             ))}
@@ -446,12 +451,17 @@ function WeddingDayCard({ day }: { day: Awaited<ReturnType<typeof loadDashboard>
       <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => (
           <li key={r.label} className="border-b border-rule last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:[&:nth-last-child(-n+3)]:border-b-0">
-            <Link href={r.href} className="flex items-baseline justify-between gap-4 py-3 hover:text-rose-ink">
-              <span className="grid min-w-0 gap-0.5">
-                <span className="label-caps text-[10px]">{r.label}</span>
-                <span className="text-[15px] tabular-nums">{r.value}</span>
+            <Link href={r.href} className="flex items-start gap-3 py-3 hover:text-rose-ink">
+              <span className="pt-0.5">
+                <TickBox checked={r.done} />
               </span>
-              <ToneBadge tone={r.done ? "on-track" : "neutral"}>{r.done ? "Done" : "Not yet"}</ToneBadge>
+              <span className="grid min-w-0 gap-0.5">
+                <span className="label-caps text-[10px]">
+                  {r.label}
+                  <span className="sr-only">: {r.done ? "done" : "not yet"}</span>
+                </span>
+                <span className="text-[15px]">{r.value}</span>
+              </span>
             </Link>
           </li>
         ))}

@@ -196,6 +196,12 @@ export const DECISIONS: Array<{ key: string; decidedOn: CalendarDate; title: str
     title: "Bridesmaids' dresses handled outside this budget",
     decision: "Dress purchases are handled separately and are not tracked in the $100,000 budget.",
   },
+  {
+    key: "decision-jumping-the-broom",
+    decidedOn: cd("2026-09-29"),
+    title: "We're jumping the broom",
+    decision: "We'll jump the broom at the end of the ceremony, after we're pronounced married and before the recessional.",
+  },
 ];
 
 /** The wedding palette, from choices already made (attire menus, shoes, metals). */
@@ -261,6 +267,7 @@ export function buildChecklist(): SeedTask[] {
     { key: "rsvp-app", title: "Set up the RSVP app and wedding website", dueDate: months(11), area: "GUESTS" },
     { key: "book-florist", title: "Book the florist", dueDate: months(11), area: "VENDORS" },
     { key: "book-ceremony-music", title: "Book ceremony musicians", dueDate: months(11), area: "CEREMONY" },
+    { key: "kwe-kwe-decide", title: "Decide on a Guyanese kwe kwe: whether, when and where", dueDate: months(10), area: "RECEPTION", priority: "HIGH", notes: "Traditionally the night before the wedding, with call-and-response songs, drumming and dancing. That night is the rehearsal dinner (Wednesday, April 12), so the choices are: make the rehearsal dinner the kwe kwe, give it its own night earlier that week, or hold it during the reception. Passover seders are the evenings of April 10 and 11. Record what you decide in Decisions." },
     { key: "collect-addresses", title: "Collect every guest's mailing address", dueDate: months(11), area: "GUESTS" },
 
     // 10–6 months
@@ -274,9 +281,11 @@ export function buildChecklist(): SeedTask[] {
     { key: "rentals", title: "Book rentals the venue doesn't include (linens, chairs, tableware, lounge)", dueDate: months(8), area: "RECEPTION" },
     { key: "honeymoon", title: "Plan and book the honeymoon", dueDate: months(8), area: "TRAVEL", notes: "Check passports now. Many countries want 6 months of validity left after you travel." },
     { key: "florist-proposal", title: "Review the florist's design proposal", dueDate: months(7), area: "VENDORS" },
+    { key: "kwe-kwe-leader", title: "If we're having a kwe kwe: find a kwe kwe leader and drummers", dueDate: months(7), area: "VENDORS", notes: "Ask family first; elders often know who leads the songs. Add them as a vendor once booked." },
     { key: "cake-tasting", title: "Cake tasting", dueDate: months(7), area: "RECEPTION" },
     { key: "book-transport", title: "Book transportation", dueDate: months(6), area: "VENDORS" },
     { key: "shuttles", title: "Book guest shuttles between the hotel and the venue", dueDate: months(5), area: "TRAVEL" },
+    { key: "broom", title: "Choose or make the broom for jumping the broom", dueDate: months(5), area: "CEREMONY", notes: "Many couples decorate it with ribbon and flowers in the wedding colors (Dusty Rose, Desert Rose, gold; no silver) and keep it as a keepsake. Add it under Vision & Décor." },
     { key: "cake", title: "Choose the cake and dessert", dueDate: months(6), area: "RECEPTION", notes: "Check first whether the venue package includes cake." },
     { key: "sizing-reminder", title: "Remind the wedding party: dress selection and sizing due Nov 7", dueDate: addDays(DRESS_SIZING_DEADLINE, -30), area: "WEDDING_PARTY", priority: "HIGH" },
     { key: "sizing-deadline", title: "Dress selection and sizing due from every attendant", dueDate: DRESS_SIZING_DEADLINE, area: "WEDDING_PARTY", priority: "HIGH", isMilestone: true, owner: "WEDDING_PARTY" },
@@ -291,6 +300,7 @@ export function buildChecklist(): SeedTask[] {
     { key: "first-fitting", title: "First wedding dress fitting", dueDate: months(3), area: "ATTIRE" },
     { key: "beauty-trial", title: "Hair and makeup trial", dueDate: months(3), area: "BEAUTY" },
     { key: "readers-toasts", title: "Ask readers and anyone giving a toast", dueDate: months(3), area: "CEREMONY" },
+    { key: "broom-people", title: "Ask who will hold and lay down the broom, and who will share its history", dueDate: months(3), area: "CEREMONY", notes: "Often an elder or a family member. A few words on the tradition help guests who haven't seen it before." },
     { key: "party-gifts", title: "Choose gifts for the wedding party", dueDate: months(3), area: "WEDDING_PARTY" },
     { key: "suits", title: "Reserve suits for the groom's side and the bridesman", dueDate: months(4), area: "ATTIRE" },
     { key: "groom-attire", title: "Get the groom's attire", dueDate: months(4), area: "ATTIRE" },
@@ -305,10 +315,12 @@ export function buildChecklist(): SeedTask[] {
     { key: "menu-final", title: "Finalize the menu and bar with the venue", dueDate: weeks(6), area: "RECEPTION", linkVenue: true },
     { key: "paper-goods", title: "Order escort cards, place cards, table numbers, menus and signs", dueDate: weeks(6), area: "STATIONERY" },
     { key: "processional", title: "Set the processional order: who walks, with whom, to which song", dueDate: weeks(6), area: "CEREMONY" },
+    { key: "kwe-kwe-plan", title: "If we're having a kwe kwe: plan the songs, food and each family's part", dueDate: weeks(6), area: "RECEPTION", notes: "Add it to the Timeline on its day, and tell the photographer if it should be covered." },
 
     // Final month
     { key: "rsvp-deadline", title: "RSVP deadline", dueDate: months(1), area: "GUESTS", priority: "HIGH", isMilestone: true },
     { key: "music-lists", title: "Send the DJ the key songs, must-play and do-not-play lists", dueDate: weeks(4), area: "RECEPTION" },
+    { key: "broom-cues", title: "Tell the officiant, photographer, videographer and DJ where the broom jump happens", dueDate: weeks(4), area: "CEREMONY", notes: "Right after you're pronounced married, before the recessional. The photographers need a clear line from the front and from the aisle, and the DJ needs the song cue." },
     { key: "vendor-insurance", title: "Collect vendors' insurance certificates if the venue requires them", dueDate: weeks(4), area: "VENDORS", linkVenue: true },
     { key: "point-person", title: "Name the day-of point person for vendor questions", dueDate: weeks(4), area: "DAY_OF", notes: "Your coordinator if you have one. Otherwise someone who isn't in the wedding party." },
     { key: "attendant-alterations", title: "Attendants finish their alterations", dueDate: weeks(4), area: "WEDDING_PARTY", owner: "WEDDING_PARTY", notes: "Alterations are each person's own cost." },

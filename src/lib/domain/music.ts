@@ -5,7 +5,7 @@ import { displayNames, ROLE_LABEL, type PartyRole, type PartySide } from "./part
 
 /** The day in order, from the prelude to the send-off. Must-play and do-not-play are lists, not moments. */
 export const MUSIC_PARTS: Array<{ key: "ceremony" | "reception"; lead: string; word: string; moments: MusicMoment[] }> = [
-  { key: "ceremony", lead: "The", word: "ceremony", moments: ["PRELUDE", "PROCESSIONAL", "COUPLE_ENTRANCE", "RECESSIONAL"] },
+  { key: "ceremony", lead: "The", word: "ceremony", moments: ["PRELUDE", "PROCESSIONAL", "COUPLE_ENTRANCE", "BROOM_JUMP", "RECESSIONAL"] },
   {
     key: "reception",
     lead: "Cocktails &",
@@ -20,7 +20,7 @@ export const DAY_MOMENTS: MusicMoment[] = MUSIC_PARTS.flatMap((p) => p.moments);
 export const LIST_MOMENTS = ["MUST_PLAY", "DO_NOT_PLAY"] as const satisfies readonly MusicMoment[];
 
 /** The moments that can't be left to chance. Each needs a song picked by us. */
-export const KEY_MOMENTS: MusicMoment[] = ["PROCESSIONAL", "COUPLE_ENTRANCE", "RECESSIONAL", "FIRST_DANCE", "LAST_DANCE"];
+export const KEY_MOMENTS: MusicMoment[] = ["PROCESSIONAL", "COUPLE_ENTRANCE", "BROOM_JUMP", "RECESSIONAL", "FIRST_DANCE", "LAST_DANCE"];
 
 export function isKeyMoment(moment: MusicMoment): boolean {
   return KEY_MOMENTS.includes(moment);

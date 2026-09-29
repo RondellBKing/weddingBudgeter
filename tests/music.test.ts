@@ -29,7 +29,7 @@ describe("songs still to choose", () => {
     expect(stillToChoose([])).toEqual(KEY_MOMENTS);
     expect(
       stillToChoose([{ moment: "FIRST_DANCE" }, { moment: "PRELUDE" }, { moment: "MUST_PLAY" }, { moment: "PROCESSIONAL" }]),
-    ).toEqual(["COUPLE_ENTRANCE", "RECESSIONAL", "LAST_DANCE"]);
+    ).toEqual(["COUPLE_ENTRANCE", "BROOM_JUMP", "RECESSIONAL", "LAST_DANCE"]);
   });
 
   it("is empty once every key moment has a song", () => {
@@ -41,7 +41,9 @@ describe("songs still to choose", () => {
     expect(DAY_MOMENTS.at(-1)).toBe("SEND_OFF");
     expect(DAY_MOMENTS).not.toContain("MUST_PLAY");
     expect(DAY_MOMENTS).not.toContain("DO_NOT_PLAY");
-    expect(new Set(DAY_MOMENTS).size).toBe(11);
+    expect(new Set(DAY_MOMENTS).size).toBe(12);
+    // Jumping the broom comes right after the couple's entrance and before the recessional.
+    expect(DAY_MOMENTS.indexOf("BROOM_JUMP")).toBe(DAY_MOMENTS.indexOf("RECESSIONAL") - 1);
   });
 
   it("groups rows by moment and keeps their order", () => {

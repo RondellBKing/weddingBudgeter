@@ -123,6 +123,7 @@ export const MUSIC_MOMENT_LABEL: Record<MusicMoment, string> = {
   PRELUDE: "Prelude (as guests arrive)",
   PROCESSIONAL: "Processional",
   COUPLE_ENTRANCE: "Couple's entrance",
+  BROOM_JUMP: "Jumping the broom",
   RECESSIONAL: "Recessional",
   COCKTAIL_HOUR: "Cocktail hour",
   GRAND_ENTRANCE: "Grand entrance",

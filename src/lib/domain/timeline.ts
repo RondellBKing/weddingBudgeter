@@ -531,7 +531,7 @@ function weddingSteps(venueName: string, firstLook: boolean): Step[] {
       location: CEREMONY_SITE,
       lead: "Officiant",
       involves: "The couple, wedding party, officiant and readers",
-      notes: "Processional, vows, rings, recessional.",
+      notes: "Processional, vows, rings, jumping the broom, recessional.",
       vendorCategory: "OFFICIANT",
     },
     {
@@ -736,7 +736,7 @@ export function buildRehearsalTemplate(input: { rehearsalDate: CalendarDate; reh
       location: input.venueName,
       lead: "Officiant or coordinator",
       involves: "Wedding party, officiant, readers and parents",
-      notes: "Walk the processional and recessional twice, and confirm where everyone stands.",
+      notes: "Walk the processional and recessional twice, practice jumping the broom, and confirm where everyone stands.",
       vendorCategory: "OFFICIANT",
     },
     {

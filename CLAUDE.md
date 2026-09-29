@@ -10,7 +10,7 @@ tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV imp
 the decision log. What remains is the couple's own deploy (README → "Put it online").
 
 **Phase 8 (luxury planner) is built.** The couple asked for everything a full-service luxury
-planner would cover. The seeded checklist is planner-grade (99 tasks). Sections, one folder each:
+planner would cover. The seeded checklist is planner-grade (105 tasks). Sections, one folder each:
 - Wedding day: `/timeline` (run of show for rehearsal day, wedding day and day after, with a
   template generator, derived vendor arrivals, the rain plan, and the printable day-of binder at
   `/timeline/print`), `/music` (songs by moment, processional drafted from the party, DJ printout),
@@ -63,6 +63,10 @@ The user found long option lists overwhelming. Ask one question at a time, in pl
   Sonel, Aretha, Nira, Agustina. Shoes (chocolate brown patent, 3.5"+): Platform Stiletto,
   Minimal Strappy Stiletto, Ankle Strap Open-Toe Heel, Block Heel. Owned shoes need approval.
   Gold metals only, no silver.
+- **Traditions:** jumping the broom is confirmed (end of the ceremony, before the recessional;
+  its own music cue `BROOM_JUMP`). A Guyanese kwe kwe is possible, not decided: traditionally the
+  night before, which is the rehearsal dinner, so the checklist asks them to choose when.
+- Checklists use square tick boxes (`TickBox`), like a paper planner, never round radio-style marks.
 - Don't assume which partner is the bride or groom from their names. Use they/them.
 
 ## Stack

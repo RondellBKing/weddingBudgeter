@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChecklist, WEDDING_DATE } from "../prisma/seed/data";
+import { buildChecklist, DECISIONS, WEDDING_DATE } from "../prisma/seed/data";
 import { parseCalendarDate } from "../src/lib/dates";
 
 // The seeded planning checklist: real data, so it has to be clean on the first load.
@@ -34,5 +34,12 @@ describe("seeded checklist", () => {
       expect(areas.has(a as never), a).toBe(true);
     }
     expect(tasks.length).toBeGreaterThan(90);
+  });
+
+  it("plans for our traditions: the broom is decided, the kwe kwe is still a choice", () => {
+    const keys = new Set(tasks.map((t) => t.key));
+    for (const k of ["broom", "broom-people", "broom-cues", "kwe-kwe-decide", "kwe-kwe-leader", "kwe-kwe-plan"]) expect(keys.has(k), k).toBe(true);
+    expect(DECISIONS.some((d) => d.key === "decision-jumping-the-broom")).toBe(true);
+    expect(DECISIONS.some((d) => d.title.toLowerCase().includes("kwe kwe"))).toBe(false);
   });
 });

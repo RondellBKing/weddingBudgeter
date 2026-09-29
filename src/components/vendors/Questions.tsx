@@ -5,7 +5,7 @@ import { ConfirmButton } from "@/components/form/ConfirmButton";
 import { Field, FormMessage, inputClass } from "@/components/form/Fields";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
-import { Icon } from "@/components/ui/Icon";
+import { TickBox } from "@/components/ui/TickBox";
 import { idleState, type ActionState } from "@/lib/forms";
 
 type SaveAction = (prev: ActionState, form: FormData) => Promise<ActionState>;
@@ -13,7 +13,7 @@ type FormAction = (form: FormData) => Promise<void>;
 
 export type QuestionView = { id: string; text: string; answer: string | null; answeredLabel: string | null };
 
-/** One "question to ask": open (empty ring) or answered (filled check, with the answer). */
+/** One "question to ask": open (empty box) or answered (ticked, with the answer). */
 export function QuestionItem({
   q,
   save,
@@ -37,13 +37,8 @@ export function QuestionItem({
 
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3.5 border-b border-rule py-4 first:pt-0 last:border-b-0 last:pb-0">
-      <span
-        aria-hidden
-        className={`mt-0.5 grid size-[18px] place-items-center rounded-full border ${
-          answered ? "border-garden bg-garden text-paper" : "border-rule-strong bg-paper"
-        }`}
-      >
-        {answered ? <Icon name="check" size={11} strokeWidth={2.4} /> : null}
+      <span className="mt-0.5">
+        <TickBox checked={answered} />
       </span>
 
       <div className="grid min-w-0 gap-2">

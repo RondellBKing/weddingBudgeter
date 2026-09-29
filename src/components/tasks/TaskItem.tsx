@@ -6,7 +6,7 @@ import { OWNER_LABEL, TASK_AREA_LABEL } from "@/lib/labels";
 import { SelectBox } from "./Selection";
 import { TaskCheck } from "./TaskCheck";
 
-// One task in the list and on the board: the round checkbox, the title (a link to edit it),
+// One task in the list and on the board: the tick box, the title (a link to edit it),
 // what it's about, and when it's due, with the date's state always in words.
 
 export function taskHref(id: string, back: string): string {

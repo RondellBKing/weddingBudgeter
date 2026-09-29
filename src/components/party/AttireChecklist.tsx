@@ -1,4 +1,4 @@
-import { Icon } from "@/components/ui/Icon";
+import { TickBox } from "@/components/ui/TickBox";
 import { formatDate } from "@/lib/dates";
 import type { ChecklistStep } from "@/lib/domain/party";
 
@@ -14,13 +14,8 @@ export function AttireChecklist({ steps }: { steps: ChecklistStep[] }) {
             key={s.key}
             className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-baseline gap-x-3 border-b border-rule py-2.5 last:border-b-0"
           >
-            <span
-              aria-hidden
-              className={`grid size-4 translate-y-0.5 place-items-center rounded-full border ${
-                s.done ? "border-garden bg-garden text-paper" : isNext ? "border-desert-rose bg-paper" : "border-rule-strong bg-paper"
-              }`}
-            >
-              {s.done ? <Icon name="check" size={11} strokeWidth={2.2} /> : null}
+            <span className="translate-y-0.5">
+              <TickBox checked={s.done} next={isNext} size="sm" />
             </span>
             <span className={`min-w-0 ${s.done ? "text-chocolate" : "text-cocoa"}`}>
               {s.label}

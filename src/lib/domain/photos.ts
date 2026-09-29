@@ -70,6 +70,7 @@ export const STANDARD_SHOT_LIST: TemplateShot[] = [
   shot("DETAILS", "Our wedding attire on the hanger, before we get dressed"),
   shot("DETAILS", "Jewelry, cufflinks, watches and fragrance"),
   shot("DETAILS", "Heirlooms, and anything borrowed or blue"),
+  shot("DETAILS", "The broom, decorated for jumping the broom"),
   shot("DETAILS", "Vow books and any letters to each other"),
   must("DETAILS", "The ceremony space, set and empty, before guests arrive"),
 
@@ -91,6 +92,7 @@ export const STANDARD_SHOT_LIST: TemplateShot[] = [
   must("CEREMONY", "The walk down the aisle, and the face waiting at the front"),
   must("CEREMONY", "Vows and the ring exchange"),
   must("CEREMONY", "The first kiss"),
+  must("CEREMONY", "Jumping the broom, from the front and from the aisle"),
   must("CEREMONY", "The recessional, back up the aisle together"),
   shot("CEREMONY", "Parents and grandparents watching", "Both sets of parents and grandparents"),
   shot("CEREMONY", "A wide shot of the whole ceremony from the back"),
