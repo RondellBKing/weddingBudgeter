@@ -39,9 +39,10 @@ describe("coverage", () => {
   const row = (c: VendorCategory) => rows.find((r) => r.category === c)!;
 
   it("lists every category except Other, booked or not", () => {
-    expect(rows).toHaveLength(15);
+    expect(rows).toHaveLength(16);
     expect(rows.some((r) => r.category === "OTHER")).toBe(false);
     expect(row("OFFICIANT")).toMatchObject({ booked: [], bookedVendors: [], inProgress: 0 });
+    expect(row("PLANNER").label).toBe("Planner or coordinator");
   });
 
   it("counts a booked vendor's alsoCovers as covered", () => {

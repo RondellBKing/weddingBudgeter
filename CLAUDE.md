@@ -29,6 +29,12 @@ Sections, one folder each:
   readiness card and counts thank-yous owed.
 - Every vendor page has a "What's included" list (`PackageItem`); the venue's is seeded from the
   contract facts, public listings (marked "to confirm") and the usual items to ask about.
+- Questions to ask: `/vendors/questions` is the interview guide (a planner's questions for each
+  kind of vendor, written for this wedding, printable with room for answers; library in
+  `domain/vendor-questions.ts`). A new vendor starts with its guide questions (`VendorQuestion.topic`
+  holds the guide's heading; the couple's own questions have none), and the vendor page groups
+  questions by topic with an "Add all N" button for guide questions it's missing. The venue's
+  seeded questions come from the same library. `PLANNER` (planner or coordinator) is a category.
 - Shared pieces: `printCss()` and `PrintButton` for printouts, `MoveButtons`/`RowLayout` for
   reorderable lists. Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
 
@@ -77,7 +83,7 @@ The user found long option lists overwhelming. Ask one question at a time, in pl
 
 ## Stack
 
-- Next.js 16.3.6 (App Router, Turbopack), React 19.3, TypeScript 6.0.3, Tailwind 4.3, Recharts 3.10.
+- Next.js 16.3.6 (App Router, Turbopack), React 19.3, TypeScript 6.0.3, Tailwind 4.3. Charts are hand-drawn (SVG rings, CSS bars); no chart library.
   TS 7 is out but drops the JS compiler API that Next's type check and typescript-eslint use.
 - Postgres + Prisma **7.10.0** (pinned exactly; the `prisma` package's `latest` tag pointed at an
   8.0 RC). Prisma 7 style: `prisma.config.ts`, `prisma-client` generator output in
@@ -164,6 +170,9 @@ sans for data, 1px hairline rules, lots of air, big quiet numbers, small upperca
   chocolate only).
 - **Text contrast:** Dusty Rose, Desert Rose, Gold and Garden fail AA as text on Ivory. Use them
   for fills only; for text use `rose-ink` #A15651, `gold-ink` #836722, `garden-ink` #637154.
+- Buttons (`buttonClass`) are small tracked capitals in every variant, one height so they line
+  up; only `quiet` (inline "Edit", "Answer") is sentence case. Figures use `Stat`/`StatRow` (serif
+  numbers on a paper strip). Category progress is plain labelled bars, not a chart library.
 - Status = on track Garden · due soon Gold · overdue Brick, always with a word, never color alone.
 - Charts: thin rings and horizontal bars, muted, categorical ramp Dusty Rose → Desert Rose →
   Cocoa → Garden → Gold. Direct labels on every chart (the light colors need them).

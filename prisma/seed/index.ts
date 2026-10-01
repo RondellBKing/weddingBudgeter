@@ -9,6 +9,7 @@ import "dotenv/config";
 import { randomBytes } from "node:crypto";
 import { toDbDate } from "../../src/lib/dates";
 import { createPrismaClient } from "../../src/lib/db-client";
+import { missingQuestions } from "../../src/lib/domain/vendor-questions";
 import { zonedTimeToInstant } from "../../src/lib/domain/zoned-time";
 import {
   APPOINTMENTS,
@@ -22,7 +23,6 @@ import {
   VENUE_ITEM,
   VENUE_PACKAGE,
   VENUE_PAYMENTS,
-  VENUE_QUESTIONS,
   WEDDING_PARTY,
 } from "./data";
 
@@ -115,11 +115,15 @@ async function main() {
         });
       }
 
-      for (const [i, text] of VENUE_QUESTIONS.entries()) {
+      // The interview guide's venue questions, skipping any the venue already has in the same words.
+      const asked = await tx.vendorQuestion.findMany({ where: { vendorId: venue.id }, select: { text: true, sortOrder: true } });
+      let order = Math.max(-1, ...asked.map((q) => q.sortOrder));
+      for (const q of missingQuestions("VENUE", asked)) {
+        const seedKey = `venue-q-${q.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80)}`;
         await tx.vendorQuestion.upsert({
-          where: { seedKey: `venue-question-${i + 1}` },
+          where: { seedKey },
           update: {},
-          create: { seedKey: `venue-question-${i + 1}`, vendorId: venue.id, text, sortOrder: i },
+          create: { seedKey, vendorId: venue.id, text: q.text, topic: q.topic, sortOrder: (order += 1) },
         });
       }
 

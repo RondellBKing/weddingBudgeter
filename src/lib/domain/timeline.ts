@@ -132,6 +132,7 @@ export type ArrivalVendor = {
 /** Who arrives, in the words a run of show uses ("Florist arrives"). */
 export const ARRIVAL_NOUN: Record<VendorCategory, string | null> = {
   VENUE: "Venue team",
+  PLANNER: "Coordinator",
   CATERING: "Caterer",
   PHOTOGRAPHY: "Photographer",
   VIDEOGRAPHY: "Videographer",

@@ -4,6 +4,7 @@
 import { addDays, todayIn, toDbDate } from "../../src/lib/dates";
 import type { Prisma } from "../../src/generated/prisma/client";
 import type { Db } from "../../src/lib/db-client";
+import { standardQuestions } from "../../src/lib/domain/vendor-questions";
 import { seedDemoDayOf, wipeDemoDayOf } from "./demo/dayof";
 import { seedDemoDesign, wipeDemoDesign } from "./demo/design";
 import { seedDemoGuestCare, wipeDemoGuestCare } from "./demo/guest-care";
@@ -22,6 +23,27 @@ export async function seedDemo(db: Db) {
       { name: "Demo: Northside Sound", category: "MUSIC_DJ", status: "RESEARCHING", isDemo: true, notes: "Sample vendor." },
     ],
   });
+
+  // Vendors added in the app start with the interview guide; the photographer has answered a few.
+  const SAMPLE_ANSWERS = [
+    "Yes, Thursday is open. They hold it for two weeks with a signed contract.",
+    "Their Thursday rate is about 15% below a Saturday.",
+    "Eight hours, a second shooter, an online gallery and print rights.",
+  ];
+  const demoVendors = await db.vendor.findMany({ where: { isDemo: true, category: { in: ["PHOTOGRAPHY", "FLORAL", "MUSIC_DJ"] } } });
+  for (const v of demoVendors) {
+    const answers = v.category === "PHOTOGRAPHY" ? SAMPLE_ANSWERS : [];
+    await db.vendorQuestion.createMany({
+      data: standardQuestions(v.category).map((q, i) => ({
+        vendorId: v.id,
+        text: q.text,
+        topic: q.topic,
+        sortOrder: i,
+        answer: answers[i] ?? null,
+        answeredOn: answers[i] ? toDbDate(addDays(today, -3)) : null,
+      })),
+    });
+  }
 
   await db.calendarEvent.createMany({
     data: [

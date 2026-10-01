@@ -9,7 +9,7 @@ import { Card, CardHeading } from "@/components/ui/Card";
 import { Meter } from "@/components/ui/Meter";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Legend, Ring } from "@/components/ui/Ring";
-import { Stat } from "@/components/ui/Stat";
+import { Stat, StatRow } from "@/components/ui/Stat";
 import { Tabs } from "@/components/ui/Tabs";
 import { ToneBadge } from "@/components/ui/Tone";
 import { loadPlan } from "@/lib/data/plan";
@@ -44,15 +44,13 @@ export default async function BudgetPage({ searchParams }: PageProps<"/budget">)
         }
       />
 
-      <Card className="px-6 sm:px-7">
-        <div className="grid grid-cols-2 gap-x-6 sm:grid-cols-3 lg:grid-cols-5 [&>*]:border-b [&>*]:border-rule lg:[&>*]:border-b-0">
-          <Stat label="Total budget" value={formatCents(budget.totalBudget)} sub={`${budget.categories.length} categories`} />
-          <Stat label="Committed" value={formatCents(budget.committed)} sub={`${formatPercent(budget.committed, budget.totalBudget)} of budget`} />
-          <Stat label="Paid" value={formatCents(budget.paid)} sub={`${formatPercent(budget.paid, budget.totalBudget)} of budget`} />
-          <Stat label="Left to pay" value={formatCents(budget.leftToPay)} sub="on signed contracts" />
-          <Stat label="Uncommitted" value={formatCents(budget.uncommitted)} sub="not yet contracted" />
-        </div>
-      </Card>
+      <StatRow label="Budget totals">
+        <Stat label="Total budget" value={formatCents(budget.totalBudget)} sub={`${budget.categories.length} categories`} />
+        <Stat label="Committed" value={formatCents(budget.committed)} sub={`${formatPercent(budget.committed, budget.totalBudget)} of budget`} />
+        <Stat label="Paid" value={formatCents(budget.paid)} sub={`${formatPercent(budget.paid, budget.totalBudget)} of budget`} />
+        <Stat label="Left to pay" value={formatCents(budget.leftToPay)} sub="on signed contracts" />
+        <Stat label="Uncommitted" value={formatCents(budget.uncommitted)} sub="not yet contracted" />
+      </StatRow>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Tabs

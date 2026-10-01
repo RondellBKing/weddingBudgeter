@@ -83,7 +83,12 @@ export function SettingsForm({ values }: { values: Values }) {
           Money &amp; <em className="italic">headcount</em>
         </legend>
         <Field id="totalBudget" label="Total budget" error={e.totalBudget}>
-          <input id="totalBudget" name="totalBudget" inputMode="decimal" defaultValue={values.totalBudget} className={inputClass} aria-invalid={!!e.totalBudget} aria-describedby={described("totalBudget")} />
+          <div className="relative">
+            <span aria-hidden className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
+              $
+            </span>
+            <input id="totalBudget" name="totalBudget" inputMode="decimal" defaultValue={values.totalBudget} className={`${inputClass} num pl-7`} aria-invalid={!!e.totalBudget} aria-describedby={described("totalBudget")} />
+          </div>
         </Field>
         <Field id="headcountTarget" label="Planned headcount" hint="Everyone eating, including the two of you and the wedding party. Used until the guest list is imported." error={e.headcountTarget}>
           <input id="headcountTarget" name="headcountTarget" type="number" min={0} inputMode="numeric" defaultValue={values.headcountTarget} className={inputClass} aria-invalid={!!e.headcountTarget} aria-describedby={described("headcountTarget", true)} />
@@ -92,7 +97,12 @@ export function SettingsForm({ values }: { values: Values }) {
           <input id="includedHeadcount" name="includedHeadcount" type="number" min={0} inputMode="numeric" defaultValue={values.includedHeadcount} className={inputClass} aria-invalid={!!e.includedHeadcount} aria-describedby={described("includedHeadcount")} />
         </Field>
         <Field id="perPersonOverage" label="Cost per person above that" error={e.perPersonOverage}>
-          <input id="perPersonOverage" name="perPersonOverage" inputMode="decimal" defaultValue={values.perPersonOverage} className={inputClass} aria-invalid={!!e.perPersonOverage} aria-describedby={described("perPersonOverage")} />
+          <div className="relative">
+            <span aria-hidden className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
+              $
+            </span>
+            <input id="perPersonOverage" name="perPersonOverage" inputMode="decimal" defaultValue={values.perPersonOverage} className={`${inputClass} num pl-7`} aria-invalid={!!e.perPersonOverage} aria-describedby={described("perPersonOverage")} />
+          </div>
         </Field>
         <Field id="overageTaxPercent" label="Tax on the overage (%)" hint="0 if the per-person cost already includes tax. NJ sales tax is 6.625." error={e.overageTaxPercent}>
           <input id="overageTaxPercent" name="overageTaxPercent" inputMode="decimal" defaultValue={values.overageTaxPercent} className={inputClass} aria-invalid={!!e.overageTaxPercent} aria-describedby={described("overageTaxPercent", true)} />

@@ -102,16 +102,6 @@ export const VENUE_PAYMENTS: SeedPayment[] = [
   },
 ];
 
-export const VENUE_QUESTIONS: string[] = [
-  "Do vendor meals count toward the 125 included people? (4–6 meals, up to $1,200 if they do)",
-  "Is the $200 per person above 125 before or after NJ sales tax and service charge?",
-  "How are children counted and priced?",
-  "When is the final headcount due?",
-  "What does the package include: cake, bar, linens, ceremony chairs?",
-  "What is the indoor rain backup for the ceremony, and how many people does it hold?",
-  "What does each vendor meal cost?",
-];
-
 /** Appointments the couple has booked. Times are New York wall-clock times. */
 export const APPOINTMENTS: Array<{
   key: string;
@@ -297,8 +287,8 @@ export function buildChecklist(): SeedTask[] {
     { key: "venue-vendor-meals", title: "Ask the venue whether vendor meals count toward the 125", dueDate: cd("2026-10-12"), area: "VENUE", priority: "HIGH", linkVenue: true, notes: "4–6 vendor meals. If they count, that's up to $1,200 of overage. Ask before payment 2 on 10/19." },
     { key: "wedding-inbox", title: "Set up a shared wedding email and a folder for every contract", dueDate: cd("2026-10-15"), area: "PLANNING", notes: "One place for contracts, receipts and vendor emails, so either of you can answer a vendor." },
     { key: "vision-brief", title: "Write our vision: the feel, colors, must-haves and what we don't want", dueDate: cd("2026-10-31"), area: "PLANNING", priority: "HIGH", notes: "One page to hand every designer, florist and photographer so their proposals start from the same picture." },
-    { key: "vendor-preview-prep", title: "Prepare for the venue's vendor preview (Nov 16, 6 PM)", dueDate: cd("2026-11-13"), area: "VENUE", linkVenue: true, notes: "Bring the open venue questions (on the venue's page), our budget per category, and a short list of vendors to meet." },
-    { key: "interview-coordinators", title: "Interview designers and day-of coordinators", dueDate: cd("2026-11-16"), area: "VENDORS", priority: "HIGH", notes: "Meeting one at the vendor preview on Nov 16. Ask what's included, when they start, how many events they take that week, and their Thursday rate." },
+    { key: "vendor-preview-prep", title: "Prepare for the venue's vendor preview (Nov 16, 6 PM)", dueDate: cd("2026-11-13"), area: "VENUE", linkVenue: true, notes: "Bring the open venue questions (on the venue's page), our budget per category, a short list of vendors to meet, and the printed interview guide (Questions to Ask) for each kind." },
+    { key: "interview-coordinators", title: "Interview designers and day-of coordinators", dueDate: cd("2026-11-16"), area: "VENDORS", priority: "HIGH", notes: "Meeting one at the vendor preview on Nov 16. Print the planner interview from Questions to Ask (Planner or coordinator) and bring it." },
 
     // 18–12 months
     { key: "guest-list-draft", title: "Draft the guest list (125 people total, including us and the wedding party)", dueDate: months(18), area: "GUESTS", priority: "HIGH", notes: "Every person above 125 costs $200. 145 people uses up the $4,000 contingency." },

@@ -5,7 +5,8 @@ import { compareDates, fromDbDate, todayIn, type CalendarDate } from "../dates";
 import { prisma } from "../db";
 import { vendorMoney } from "../domain/vendor-money";
 import { vendorFormValues } from "../domain/vendor-form";
-import { sortVendors } from "../domain/vendors";
+import { missingQuestions } from "../domain/vendor-questions";
+import { sortVendors, type VendorCategory } from "../domain/vendors";
 import { loadPlan, type Plan } from "./plan";
 
 // Loaders for the vendor pages. Every amount comes from the plan (budget items and payments),
@@ -104,6 +105,7 @@ export const loadVendor = cache(async (id: string) => {
     questions: v.questions.map((q) => ({
       id: q.id,
       text: q.text,
+      topic: q.topic,
       answer: q.answer,
       answeredOn: fromDbDate(q.answeredOn),
     })),
@@ -126,6 +128,34 @@ export const loadVendor = cache(async (id: string) => {
     })),
   };
 });
+
+/**
+ * The interview guide's page: the wedding facts for its header, how many vendors of each kind we
+ * have, and, for one kind, each vendor with how far its interview has got.
+ */
+export async function loadInterviewGuide(category: VendorCategory | null) {
+  await requireSession();
+  const plan = await loadPlan();
+  const [counts, rows] = await Promise.all([
+    prisma.vendor.groupBy({ by: ["category"], _count: { _all: true } }),
+    category
+      ? prisma.vendor.findMany({
+          where: { category },
+          select: { id: true, name: true, category: true, status: true, questions: { select: { text: true, answer: true } } },
+        })
+      : Promise.resolve([]),
+  ]);
+  const vendorCount = new Map<VendorCategory, number>(counts.map((c) => [c.category, c._count._all]));
+  const vendors = sortVendors(rows).map((v) => ({
+    id: v.id,
+    name: v.name,
+    status: v.status,
+    asked: v.questions.length,
+    answered: v.questions.filter((q) => q.answer !== null).length,
+    missing: missingQuestions(v.category, v.questions).length,
+  }));
+  return { settings: plan.settings, today: plan.today, vendorCount, vendors };
+}
 
 export type VendorDetail = NonNullable<Awaited<ReturnType<typeof loadVendor>>>;
 

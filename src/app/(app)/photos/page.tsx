@@ -79,7 +79,7 @@ function Counts({ shots }: { shots: ShotView[] }) {
     { label: "Family groupings", value: c.family, sub: FAMILY_ORDER_NOTE, href: "#shots-FAMILY" },
   ];
   return (
-    <section aria-label="Shot list at a glance" className="grid border-y border-rule sm:grid-cols-3">
+    <Card as="section" aria-label="Shot list at a glance" className="grid px-6 sm:grid-cols-3 sm:px-7">
       {stats.map((s) => (
         <div
           key={s.label}
@@ -100,7 +100,7 @@ function Counts({ shots }: { shots: ShotView[] }) {
           ) : null}
         </div>
       ))}
-    </section>
+    </Card>
   );
 }
 

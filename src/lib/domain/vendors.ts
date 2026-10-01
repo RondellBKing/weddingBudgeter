@@ -2,11 +2,12 @@
 // someone booked. Pure functions only; the pages and loaders feed them database rows.
 
 export type VendorCategory =
-  | "VENUE" | "CATERING" | "PHOTOGRAPHY" | "VIDEOGRAPHY" | "FLORAL" | "MUSIC_DJ" | "MUSIC_CEREMONY"
+  | "VENUE" | "PLANNER" | "CATERING" | "PHOTOGRAPHY" | "VIDEOGRAPHY" | "FLORAL" | "MUSIC_DJ" | "MUSIC_CEREMONY"
   | "CAKE" | "ATTIRE" | "BEAUTY" | "STATIONERY" | "RENTALS" | "TRANSPORT" | "OFFICIANT" | "LODGING" | "OTHER";
 
 export const VENDOR_CATEGORY_LABEL: Record<VendorCategory, string> = {
   VENUE: "Venue",
+  PLANNER: "Planner or coordinator",
   CATERING: "Catering",
   PHOTOGRAPHY: "Photography",
   VIDEOGRAPHY: "Videography",

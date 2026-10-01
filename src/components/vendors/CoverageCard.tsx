@@ -23,11 +23,14 @@ export function CoverageCard({ rows }: { rows: CoverageRow[] }) {
         detail={`${bookedCount} of ${rows.length}`}
         fill="bg-garden"
       />
-      <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-[3px] border border-rule bg-rule sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-[3px] border border-rule bg-paper sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((c) => {
           const done = c.bookedVendors.length > 0;
           return (
-            <li key={c.category} className={`grid content-start gap-1 px-4 py-3.5 ${done ? "bg-paper" : "bg-ivory/60"}`}>
+            <li
+              key={c.category}
+              className={`grid content-start gap-1 px-4 py-3.5 shadow-[0_0_0_1px_var(--color-rule)] ${done ? "bg-paper" : "bg-ivory/60"}`}
+            >
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-[15px]">{c.label}</span>
                 {done ? (
@@ -60,6 +63,10 @@ export function CoverageCard({ rows }: { rows: CoverageRow[] }) {
                     Not started ·{" "}
                     <Link href={`/vendors/new?category=${c.category}`} className={linkClass}>
                       Add one
+                    </Link>
+                    {" · "}
+                    <Link href={`/vendors/questions?category=${c.category}`} className={linkClass}>
+                      What to ask
                     </Link>
                   </>
                 )}

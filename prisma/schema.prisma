@@ -208,6 +208,7 @@ model Vendor {
 
 enum VendorCategory {
   VENUE
+  PLANNER
   CATERING
   PHOTOGRAPHY
   VIDEOGRAPHY
@@ -240,6 +241,8 @@ model VendorQuestion {
   vendorId   String
   vendor     Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   text       String
+  /// The interview guide's heading ("Date and price"); null for the couple's own questions.
+  topic      String?
   answer     String?
   answeredOn DateTime? @db.Date
   sortOrder  Int       @default(0)
