@@ -67,10 +67,10 @@ function planAt(headcount: number, extraItems: ItemRow[] = [], cats = categories
 }
 
 describe("seeded budget", () => {
-  it("has categories that add up to $98,700 with the dress line removed", () => {
+  it("has categories that add up to $97,100: no dress line, and no cake or ceremony music (the venue includes them)", () => {
     const allocated = CATEGORIES.reduce((s, c) => s + c.estimateCents, 0);
-    expect(allocated).toBe(9_870_000);
-    expect(CATEGORIES).toHaveLength(20);
+    expect(allocated).toBe(9_710_000);
+    expect(CATEGORIES).toHaveLength(18);
     expect(CATEGORIES.filter((c) => c.isContingency)).toHaveLength(1);
   });
 
@@ -86,7 +86,7 @@ describe("seeded budget", () => {
     expect(summary.paid).toBe(1_000_000);
     expect(summary.leftToPay).toBe(4_400_000);
     expect(summary.uncommitted).toBe(4_600_000);
-    expect(summary.unallocated).toBe(130_000);
+    expect(summary.unallocated).toBe(290_000);
     expect(summary.contingency.available).toBe(400_000);
     expect(summary.overBudgetCents).toBe(0);
   });

@@ -59,7 +59,7 @@ export function PackageLineRow({
   const prefix = `pkg-${line.id}-`;
 
   return (
-    <li className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 border-b border-rule py-3 last:border-b-0">
+    <li id={`pkg-${line.id}`} className="grid scroll-mt-24 grid-cols-[auto_minmax(0,1fr)] gap-x-3 border-b border-rule py-3 last:border-b-0">
       <form action={toggle} className="pt-px">
         <TickButton included={line.status === "INCLUDED"} name={line.name} />
       </form>
@@ -77,6 +77,21 @@ export function PackageLineRow({
             ) : null}
           </span>
         </div>
+        {line.choice && !editing ? (
+          <p className="flex max-w-prose flex-wrap items-baseline gap-x-2 text-[13.5px] leading-relaxed">
+            {line.chosen ? (
+              <>
+                <span className="text-[10px] font-semibold tracking-[0.12em] text-garden-ink uppercase">Our choice</span>
+                <span className="text-chocolate">{line.chosen}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-[10px] font-semibold tracking-[0.12em] text-gold-ink uppercase">To choose</span>
+                <span className="text-cocoa">{line.choice}</span>
+              </>
+            )}
+          </p>
+        ) : null}
         {line.notes && !editing ? <p className="max-w-prose text-[13px] leading-relaxed text-muted">{line.notes}</p> : null}
 
         {editing ? (
@@ -99,6 +114,24 @@ export function PackageLineRow({
                   options={optionsFrom(PACKAGE_SECTION_LABEL)}
                   defaultValue={line.section}
                   error={e.section}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  idPrefix={prefix}
+                  name="choice"
+                  label="What we pick here"
+                  hint="Leave blank if there's nothing to choose."
+                  defaultValue={line.choice ?? ""}
+                  error={e.choice}
+                />
+                <TextField
+                  idPrefix={prefix}
+                  name="chosen"
+                  label="Our choice"
+                  hint="Fill this in once you've decided."
+                  defaultValue={line.chosen ?? ""}
+                  error={e.chosen}
                 />
               </div>
               <TextareaField idPrefix={prefix} name="notes" label="Notes" rows={2} defaultValue={line.notes} error={e.notes} />

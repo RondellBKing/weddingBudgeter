@@ -428,6 +428,11 @@ export default async function DashboardPage() {
               <span className="grid gap-0.5">
                 <span className="label-caps text-[10px]">The venue package</span>
                 <span className="num text-[14px] text-cocoa">{d.venuePackage.words}</span>
+                {d.venuePackage.choicesOpen > 0 ? (
+                  <span className="num text-[13px] text-gold-ink">
+                    {d.venuePackage.choicesOpen} {d.venuePackage.choicesOpen === 1 ? "choice" : "choices"} still to make
+                  </span>
+                ) : null}
               </span>
               <span className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink">
                 See the list

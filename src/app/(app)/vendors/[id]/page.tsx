@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ConfirmButton } from "@/components/form/ConfirmButton";
-import { SubmitButton } from "@/components/form/SubmitButton";
 import { TaskCheck } from "@/components/tasks/TaskCheck";
 import { buttonClass } from "@/components/ui/Button";
 import { Card, CardHeading } from "@/components/ui/Card";
@@ -16,16 +15,14 @@ import { VendorStatusBadge } from "@/components/vendors/VendorStatusBadge";
 import { requireSession } from "@/lib/auth/require-session";
 import { loadVendor } from "@/lib/data/vendors";
 import { compareDates, daysBetween, formatClockTime, formatDate, formatInstant, relativeDays } from "@/lib/dates";
-import { groupPackage, packageSummary, summaryWords } from "@/lib/domain/package";
+import { groupPackage, openChoices, packageSummary, splitIncluded, summaryWords, type PackageLine } from "@/lib/domain/package";
 import { displayUrl, instagramUrl, telHref } from "@/lib/domain/vendor-contact";
-import { groupByTopic, missingQuestions } from "@/lib/domain/vendor-questions";
 import { arrivesBeforeAccess, statusGroup, VENDOR_CATEGORY_LABEL } from "@/lib/domain/vendors";
 import { EVENT_TYPE_LABEL, PARTNER_LABEL, TASK_STATUS_LABEL } from "@/lib/labels";
 import {
   addNote,
   addPackageItem,
   addQuestion,
-  addStandardQuestions,
   clearAnswer,
   deleteNote,
   deletePackageItem,
@@ -61,150 +58,50 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
   );
 }
 
+function PackageGroups({ groups }: { groups: Array<{ section: string; label: string; lines: PackageLine[] }> }) {
+  return (
+    <div className="grid">
+      {groups.map((g) => (
+        <section
+          key={g.section}
+          aria-label={g.label}
+          className="grid gap-2 border-b border-rule py-5 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8"
+        >
+          <h3 className="font-display text-[22px] leading-tight italic">{g.label}</h3>
+          <ul className="grid">
+            {g.lines.map((line) => (
+              <PackageLineRow
+                key={line.id}
+                line={line}
+                toggle={setPackageIncluded.bind(null, line.id, line.status !== "INCLUDED")}
+                save={savePackageItem.bind(null, line.id)}
+                remove={deletePackageItem.bind(null, line.id)}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
   await requireSession();
   const { id } = await params;
   const data = await loadVendor(id);
   if (!data) notFound();
   const { plan, vendor: v, money, questions, log, tasks, events, packageLines } = data;
-  const packageGroups = groupPackage(packageLines);
+  const { inPackage, notIncluded } = splitIncluded(packageLines);
+  const packageGroups = groupPackage(inPackage);
+  const notIncludedGroups = groupPackage(notIncluded);
+  const toChoose = openChoices(packageLines);
+  const choiceCount = packageLines.filter((l) => l.choice !== null && l.status !== "NOT_INCLUDED").length;
   const pkg = packageSummary(packageLines);
   const { settings, today } = plan;
   const tz = settings.timezone;
   const early = arrivesBeforeAccess(v.arrivalTime, settings.venueAccessTime);
   const openCount = questions.filter((q) => q.answer === null).length;
-  const questionGroups = groupByTopic(questions);
-  const missing = missingQuestions(v.category, questions);
-  const booked = v.status === "BOOKED";
   const hasContact = Boolean(v.contactName || v.email || v.phone || v.website || v.instagram);
-
-  // What the package includes.
-  const packageCard = (
-    <Card id="package" className="grid scroll-mt-24 gap-6 p-6 sm:p-8" aria-labelledby="package-h">
-      <CardHeading
-        id="package-h"
-        title={v.category === "VENUE" ? "What the venue package includes" : "What's included"}
-        action={packageLines.length > 0 ? <span className="num text-[13px] text-muted">{summaryWords(pkg)}</span> : undefined}
-      />
-      {packageLines.length > 0 ? (
-        <>
-          <p className="max-w-prose text-sm text-cocoa">
-            Tick each line once the contract or the {v.category === "VENUE" ? "venue" : "vendor"} confirms it&apos;s included. Anything that costs
-            extra belongs in the Budget as its own line.
-          </p>
-          <div className="grid">
-            {packageGroups.map((g) => (
-              <section
-                key={g.section}
-                aria-label={g.label}
-                className="grid gap-2 border-b border-rule py-5 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8"
-              >
-                <h3 className="font-display text-[22px] leading-tight italic">{g.label}</h3>
-                <ul className="grid">
-                  {g.lines.map((line) => (
-                    <PackageLineRow
-                      key={line.id}
-                      line={line}
-                      toggle={setPackageIncluded.bind(null, line.id, line.status !== "INCLUDED")}
-                      save={savePackageItem.bind(null, line.id)}
-                      remove={deletePackageItem.bind(null, line.id)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        </>
-      ) : (
-        <p className="text-sm text-muted">Nothing listed yet. Add what their package covers, and tick each line once it&apos;s confirmed.</p>
-      )}
-      <div className="border-t border-rule pt-5">
-        <AddPackageLineForm action={addPackageItem.bind(null, v.id)} />
-      </div>
-    </Card>
-  );
-
-  // Questions to ask.
-  const questionsCard = (
-    <Card id="questions" className="grid scroll-mt-24 gap-6 p-6 sm:p-8" aria-labelledby="questions-h">
-      <CardHeading
-        id="questions-h"
-        title="Questions to ask"
-        action={
-          questions.length > 0 ? (
-            <span className="num text-[13px] text-muted">
-              {openCount === 0 ? "All answered" : `${openCount} of ${questions.length} still to ask`}
-            </span>
-          ) : undefined
-        }
-      />
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <p className="max-w-prose text-sm text-cocoa">
-          Take these to every call and meeting. Answer each one as you hear back, and it&apos;s ticked off with the date.
-        </p>
-        <Link
-          href={`/vendors/questions?category=${v.category}`}
-          className="inline-flex items-center gap-1.5 text-[13px] whitespace-nowrap text-rose-ink hover:text-chocolate"
-        >
-          The interview guide
-          <Icon name="arrow" size={14} />
-        </Link>
-      </div>
-      {missing.length > 0 ? (
-        <form
-          action={addStandardQuestions.bind(null, v.id)}
-          className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-[3px] border border-dashed border-rule-strong bg-ivory/40 px-4 py-3.5 sm:px-5"
-        >
-          <p className="max-w-prose text-sm text-cocoa">
-            {missing.length === 1 ? "One question" : `${missing.length} questions`} from the interview guide for{" "}
-            {VENDOR_CATEGORY_LABEL[v.category].toLowerCase()} {missing.length === 1 ? "isn't" : "aren't"} on this list yet.
-          </p>
-          <SubmitButton size="sm" variant="secondary" pendingLabel="Adding…">
-            Add {missing.length === 1 ? "it" : `all ${missing.length}`}
-          </SubmitButton>
-        </form>
-      ) : null}
-      {questions.length > 0 ? (
-        <div className="grid">
-          {questionGroups.map((g) => (
-            <section
-              key={g.topic}
-              aria-label={g.topic}
-              className="grid gap-3 border-b border-rule py-5 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8"
-            >
-              <div className="grid content-start gap-1">
-                <h3 className="font-display text-[22px] leading-tight italic">{g.topic}</h3>
-                <p className="num text-[12px] text-muted">
-                  {g.questions.filter((q) => q.answer !== null).length} of {g.questions.length} answered
-                </p>
-              </div>
-              <ul className="grid">
-                {g.questions.map((q) => (
-                  <QuestionItem
-                    key={q.id}
-                    q={{
-                      id: q.id,
-                      text: q.text,
-                      answer: q.answer,
-                      answeredLabel: q.answeredOn ? formatDate(q.answeredOn, "medium") : null,
-                    }}
-                    save={saveQuestion.bind(null, q.id)}
-                    clear={clearAnswer.bind(null, q.id)}
-                    remove={deleteQuestion.bind(null, q.id)}
-                  />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted">No questions yet. Jot them down before the next call and tick them off as you go.</p>
-      )}
-      <div className="border-t border-rule pt-5">
-        <AddQuestionForm action={addQuestion.bind(null, v.id)} />
-      </div>
-    </Card>
-  );
 
   return (
     <div className="grid gap-8 sm:gap-10">
@@ -232,7 +129,9 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                   {v.name}
                 </h1>
                 {v.alsoCovers.length > 0 ? (
-                  <p className="text-sm text-cocoa">Also covers {v.alsoCovers.map((c) => VENDOR_CATEGORY_LABEL[c].toLowerCase()).join(", ")}</p>
+                  <p className="text-sm text-cocoa">
+                    Also covers {v.alsoCovers.map((c) => VENDOR_CATEGORY_LABEL[c].toLowerCase()).join(", ")}
+                  </p>
                 ) : null}
               </div>
               <Link href={`/vendors/${v.id}/edit`} className={buttonClass("secondary", "sm")}>
@@ -331,13 +230,112 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
         headcount={plan.headcount.headcount}
       />
 
-      {/* A booked vendor's package matters most; before that, the questions do. */}
-      {booked ? packageCard : questionsCard}
-      {booked ? questionsCard : packageCard}
+      {/* What the package includes */}
+      <Card id="package" className="grid scroll-mt-24 gap-6 p-6 sm:p-8" aria-labelledby="package-h">
+        <CardHeading
+          id="package-h"
+          title={v.category === "VENUE" ? "What the venue package includes" : "What's included"}
+          action={packageLines.length > 0 ? <span className="num text-[13px] text-muted">{summaryWords(pkg)}</span> : undefined}
+        />
+        {packageLines.length > 0 ? (
+          <>
+            <p className="max-w-prose text-sm text-cocoa">
+              {v.category === "VENUE"
+                ? "Line by line from the signed contract. Anything included here needs no line of its own in the Budget; anything that costs extra does."
+                : "Tick each line once the vendor confirms it's included. Anything that costs extra belongs in the Budget as its own line."}
+            </p>
+            {choiceCount > 0 ? (
+              <section aria-labelledby="choose-h" className="grid gap-3 rounded-[3px] border border-gold/40 bg-ivory/50 px-5 py-4 sm:px-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <h3 id="choose-h" className="label-caps text-gold-ink">
+                    Still to decide
+                  </h3>
+                  <span className="num text-[12.5px] text-muted">
+                    {toChoose.length === 0 ? `All ${choiceCount} choices made` : `${toChoose.length} of ${choiceCount} choices open`}
+                  </span>
+                </div>
+                {toChoose.length > 0 ? (
+                  <ul className="grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
+                    {toChoose.map((l) => (
+                      <li key={l.id} className="text-[13.5px] leading-snug">
+                        <a href={`#pkg-${l.id}`} className="text-chocolate underline-offset-4 hover:text-rose-ink hover:underline">
+                          {l.name}
+                        </a>
+                        <span className="text-muted">: {l.choice}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="text-[12.5px] text-muted">Most are made at the menu tasting. Edit a line to record what you picked.</p>
+              </section>
+            ) : null}
+            <PackageGroups groups={packageGroups} />
+            {notIncluded.length > 0 ? (
+              <details className="group rounded-[3px] border border-rule">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <span className="grid gap-0.5">
+                    <span className="label-caps">Not in our package</span>
+                    <span className="text-[13px] text-muted">
+                      {notIncluded.length} {notIncluded.length === 1 ? "option" : "options"} the contract marks No. Any of them can be added for a price.
+                    </span>
+                  </span>
+                  <Icon name="arrow" size={16} className="shrink-0 rotate-90 text-rose-ink transition-transform group-open:-rotate-90" />
+                </summary>
+                <div className="border-t border-rule px-5 py-5">
+                  <PackageGroups groups={notIncludedGroups} />
+                </div>
+              </details>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-sm text-muted">Nothing listed yet. Add what their package covers, and tick each line once it&apos;s confirmed.</p>
+        )}
+        <div className="border-t border-rule pt-5">
+          <AddPackageLineForm action={addPackageItem.bind(null, v.id)} />
+        </div>
+      </Card>
 
       <div className="grid items-start gap-5 lg:grid-cols-12">
+        {/* Questions to ask */}
+        <Card className="grid gap-6 p-6 sm:p-8 lg:col-span-7" aria-labelledby="questions-h">
+          <CardHeading
+            id="questions-h"
+            title="Questions to ask"
+            action={
+              questions.length > 0 ? (
+                <span className="num text-[13px] text-muted">
+                  {openCount === 0 ? "All answered" : `${openCount} of ${questions.length} still to ask`}
+                </span>
+              ) : undefined
+            }
+          />
+          {questions.length > 0 ? (
+            <ul className="grid">
+              {questions.map((q) => (
+                <QuestionItem
+                  key={q.id}
+                  q={{
+                    id: q.id,
+                    text: q.text,
+                    answer: q.answer,
+                    answeredLabel: q.answeredOn ? formatDate(q.answeredOn, "medium") : null,
+                  }}
+                  save={saveQuestion.bind(null, q.id)}
+                  clear={clearAnswer.bind(null, q.id)}
+                  remove={deleteQuestion.bind(null, q.id)}
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">No questions yet. Jot them down before the next call and tick them off as you go.</p>
+          )}
+          <div className="border-t border-rule pt-5">
+            <AddQuestionForm action={addQuestion.bind(null, v.id)} />
+          </div>
+        </Card>
+
         {/* Communication log */}
-        <Card className="grid gap-6 p-6 sm:p-8 lg:col-span-7" aria-labelledby="log-h">
+        <Card className="grid gap-6 p-6 sm:p-8 lg:col-span-5" aria-labelledby="log-h">
           <CardHeading id="log-h" title="Communication log" />
           <AddNoteForm action={addNote.bind(null, v.id)} />
           {log.length > 0 ? (
@@ -376,106 +374,102 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
             </p>
           )}
         </Card>
-        {/* Linked tasks and appointments */}
-        <div className="grid items-start gap-5 lg:col-span-5">
-          <Card className="grid gap-4 p-6 sm:p-8" aria-labelledby="tasks-h">
-            <CardHeading
-              id="tasks-h"
-              title="Tasks"
-              action={
-                <Link href="/tasks" className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink hover:text-chocolate">
-                  All tasks
-                  <Icon name="arrow" size={14} />
-                </Link>
-              }
-            />
-            {tasks.length > 0 ? (
-              <ul className="grid">
-                {tasks.map((t) => {
-                  const done = t.status === "DONE";
-                  const days = t.dueDate ? daysBetween(today, t.dueDate) : null;
-                  const overdue = !done && days !== null && days < 0;
-                  return (
-                    <li key={t.id} className="flex gap-2.5 border-b border-rule py-3 first:pt-0 last:border-b-0 last:pb-0">
-                      <span className="-mt-1 -ml-1">
-                        <TaskCheck id={t.id} done={done} title={t.title} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`block text-[15px] leading-snug ${done ? "text-muted line-through decoration-rule-strong" : ""}`}>
-                          {t.title}
-                        </span>
-                        <span className="block text-xs text-muted">
-                          {TASK_STATUS_LABEL[t.status]}
-                          {t.isMilestone ? " · Milestone" : ""}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="num block text-sm text-cocoa">{t.dueDate ? formatDate(t.dueDate, "medium") : "No date"}</span>
-                        {overdue ? (
-                          <span className="block text-[10px] font-semibold tracking-[0.1em] text-brick uppercase">{relativeDays(days!)}</span>
-                        ) : null}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">No tasks linked to {v.name}.</p>
-            )}
-          </Card>
+      </div>
 
-          <Card className="grid gap-4 p-6 sm:p-8" aria-labelledby="events-h">
-            <CardHeading
-              id="events-h"
-              title="Appointments"
-              action={
-                <Link href="/calendar" className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink hover:text-chocolate">
-                  Calendar
-                  <Icon name="arrow" size={14} />
-                </Link>
-              }
-            />
-            {events.length > 0 ? (
-              <ul className="grid">
-                {events.map((e) => {
-                  const past = compareDates(e.date, today) < 0;
-                  return (
-                    <li
-                      key={e.id}
-                      className={`grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-b border-rule py-3 first:pt-0 last:border-b-0 last:pb-0 ${past ? "text-muted" : ""}`}
-                    >
-                      <span className="text-center leading-none">
-                        <span className="label-caps block text-[10px]">{formatDate(e.date, "month-day").split(" ")[0]}</span>
-                        <span className="num mt-1 block font-display text-[26px]">{Number(e.date.slice(8))}</span>
+      {/* Linked tasks and appointments */}
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <Card className="grid gap-4 p-6 sm:p-8" aria-labelledby="tasks-h">
+          <CardHeading
+            id="tasks-h"
+            title="Tasks"
+            action={
+              <Link href="/tasks" className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink hover:text-chocolate">
+                All tasks
+                <Icon name="arrow" size={14} />
+              </Link>
+            }
+          />
+          {tasks.length > 0 ? (
+            <ul className="grid">
+              {tasks.map((t) => {
+                const done = t.status === "DONE";
+                const days = t.dueDate ? daysBetween(today, t.dueDate) : null;
+                const overdue = !done && days !== null && days < 0;
+                return (
+                  <li key={t.id} className="flex gap-2.5 border-b border-rule py-3 first:pt-0 last:border-b-0 last:pb-0">
+                    <span className="-mt-1 -ml-1">
+                      <TaskCheck id={t.id} done={done} title={t.title} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-[15px] leading-snug ${done ? "text-muted line-through decoration-rule-strong" : ""}`}>
+                        {t.title}
                       </span>
-                      <span className="min-w-0">
-                        <span className="block text-[15px] leading-snug">{e.title}</span>
-                        <span className="block text-xs text-muted">
-                          {[
-                            EVENT_TYPE_LABEL[e.type],
-                            formatDate(e.date, "weekday-medium"),
-                            e.startAt
-                              ? formatInstant(e.startAt, tz, {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                })
-                              : "All day",
-                            e.location,
-                            past ? "Past" : null,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </span>
+                      <span className="block text-xs text-muted">
+                        {TASK_STATUS_LABEL[t.status]}
+                        {t.isMilestone ? " · Milestone" : ""}
                       </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">No appointments yet. Tastings, fittings and meetings with {v.name} will show up here.</p>
-            )}
-          </Card>
-        </div>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="num block text-sm text-cocoa">{t.dueDate ? formatDate(t.dueDate, "medium") : "No date"}</span>
+                      {overdue ? (
+                        <span className="block text-[10px] font-semibold tracking-[0.1em] text-brick uppercase">{relativeDays(days!)}</span>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">No tasks linked to {v.name}.</p>
+          )}
+        </Card>
+
+        <Card className="grid gap-4 p-6 sm:p-8" aria-labelledby="events-h">
+          <CardHeading
+            id="events-h"
+            title="Appointments"
+            action={
+              <Link href="/calendar" className="inline-flex items-center gap-1.5 text-[13px] text-rose-ink hover:text-chocolate">
+                Calendar
+                <Icon name="arrow" size={14} />
+              </Link>
+            }
+          />
+          {events.length > 0 ? (
+            <ul className="grid">
+              {events.map((e) => {
+                const past = compareDates(e.date, today) < 0;
+                return (
+                  <li
+                    key={e.id}
+                    className={`grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-b border-rule py-3 first:pt-0 last:border-b-0 last:pb-0 ${past ? "text-muted" : ""}`}
+                  >
+                    <span className="text-center leading-none">
+                      <span className="label-caps block text-[10px]">{formatDate(e.date, "month-day").split(" ")[0]}</span>
+                      <span className="num mt-1 block font-display text-[26px]">{Number(e.date.slice(8))}</span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[15px] leading-snug">{e.title}</span>
+                      <span className="block text-xs text-muted">
+                        {[
+                          EVENT_TYPE_LABEL[e.type],
+                          formatDate(e.date, "weekday-medium"),
+                          e.startAt ? formatInstant(e.startAt, tz, { hour: "numeric", minute: "2-digit" }) : "All day",
+                          e.location,
+                          past ? "Past" : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">No appointments yet. Tastings, fittings and meetings with {v.name} will show up here.</p>
+          )}
+        </Card>
       </div>
     </div>
   );

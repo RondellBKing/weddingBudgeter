@@ -186,6 +186,7 @@ export const PACKAGE_SECTION_LABEL: Record<PackageSection, string> = {
   SUITES: "Getting-ready suites",
   STAFF: "Staff and service",
   GUESTS: "For guests",
+  PRICING: "Pricing and terms",
   OTHER: "Other",
 };
 

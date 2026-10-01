@@ -12,7 +12,8 @@ export const SETTINGS = {
   weddingDate: WEDDING_DATE,
   timezone: "America/New_York",
   venueName: "The Estate at Florentine Gardens",
-  venueAddress: "River Vale, New Jersey",
+  venueAddress: "97 Rivervale Road, River Vale, NJ 07675",
+  ceremonyTime: "18:00", // the contract: ceremony 6:00–6:30 PM, reception 6:30 PM to midnight
   venueAccessTime: "06:00",
   headcountTarget: 125, // everyone eating, including the couple and the 14 attendants
   totalBudgetCents: 10_000_000,
@@ -23,7 +24,11 @@ export const SETTINGS = {
   dressSizingDeadline: DRESS_SIZING_DEADLINE,
 } as const;
 
-/** Starting estimates. Bridesmaids' dresses are handled outside this app, so they're not here. */
+/**
+ * Starting estimates. Bridesmaids' dresses are handled outside this app, so they're not here. Nor
+ * are ceremony music (the venue's piano and flute) or the cake (its four-tier cake and plated
+ * dessert): the signed contract includes both.
+ */
 export const CATEGORIES: Array<{ key: string; name: string; estimateCents: number; isContingency?: boolean }> = [
   { key: "venue", name: "Venue", estimateCents: 5_400_000 },
   { key: "floral", name: "Floral & decor", estimateCents: 700_000 },
@@ -39,8 +44,6 @@ export const CATEGORIES: Array<{ key: string; name: string; estimateCents: numbe
   { key: "stationery", name: "Stationery", estimateCents: 140_000 },
   { key: "gifts", name: "Gifts — party + parents", estimateCents: 130_000 },
   { key: "transportation", name: "Transportation", estimateCents: 120_000 },
-  { key: "cake", name: "Cake & dessert", estimateCents: 90_000 },
-  { key: "ceremony-music", name: "Ceremony music", estimateCents: 70_000 },
   { key: "groom-attire", name: "Groom's attire", estimateCents: 70_000 },
   { key: "favors", name: "Favors & welcome bags", estimateCents: 60_000 },
   { key: "officiant", name: "Officiant", estimateCents: 60_000 },
@@ -53,9 +56,15 @@ export const VENUE = {
   category: "VENUE",
   status: "BOOKED",
   contractSignedOn: cd("2026-04-18"),
+  contactName: "Samantha Mayor",
+  email: "info@florentinegardens.com",
+  phone: "201-666-0444",
+  // The contract includes dinner, the four-tier cake and the ceremony pianist and flutist.
+  alsoCovers: ["CATERING", "CAKE", "MUSIC_CEREMONY"] as const,
   notes:
-    "Contract signed by DocuSign 4/17–4/18/2026. Vendor and setup arrival allowed from 6:00 AM. " +
-    "Includes 125 people; $200 per person above 125, due 4/1/2028.",
+    "Contract signed by DocuSign 4/17–4/18/2026 (Samantha Mayor signed for the Estate). Ceremony 6:00–6:30 PM, " +
+    "cocktail hour 6:30–7:30 PM, reception until midnight. Vendors from 6:00 AM, out by 1:30 AM. " +
+    "$47,500 before tax for up to 125 adults; $54,000 with tax and the maître d' fee. $200 per adult above 125, due 4/1/2028.",
 } as const;
 
 export const VENUE_ITEM = {
@@ -79,9 +88,9 @@ export type SeedPayment = {
 
 export const VENUE_PAYMENTS: SeedPayment[] = [
   { key: "venue-payment-1", sequence: 1, kind: "DEPOSIT", amountCents: 1_000_000, dueDate: cd("2026-04-19"), paidDate: cd("2026-04-18"), notes: "Deposit on signing" },
-  { key: "venue-payment-2", sequence: 2, kind: "INSTALLMENT", amountCents: 1_000_000, dueDate: cd("2026-10-19"), notes: "Second payment" },
+  { key: "venue-payment-2", sequence: 2, kind: "INSTALLMENT", amountCents: 1_000_000, dueDate: cd("2026-10-19"), notes: "Second payment (moved from 7/19/2026, initialed on the contract)" },
   { key: "venue-payment-3", sequence: 3, kind: "INSTALLMENT", amountCents: 1_500_000, dueDate: cd("2027-10-19"), notes: "Third payment" },
-  { key: "venue-payment-4", sequence: 4, kind: "FINAL", amountCents: 1_565_000, dueDate: cd("2028-03-03"), notes: "Final payment to reach the contract minimum" },
+  { key: "venue-payment-4", sequence: 4, kind: "FINAL", amountCents: 1_565_000, dueDate: cd("2028-03-13"), notes: "Final payment to reach the contract minimum" },
   {
     key: "venue-payment-5",
     sequence: 5,
@@ -127,52 +136,114 @@ export const APPOINTMENTS: Array<{
 
 type PackageSeed = {
   key: string;
-  section: "SPACE" | "CEREMONY" | "COCKTAIL_HOUR" | "DINNER" | "DESSERT" | "BAR" | "TABLES" | "SUITES" | "STAFF" | "GUESTS" | "OTHER";
+  section: "SPACE" | "CEREMONY" | "COCKTAIL_HOUR" | "DINNER" | "DESSERT" | "BAR" | "TABLES" | "SUITES" | "STAFF" | "GUESTS" | "PRICING" | "OTHER";
   name: string;
   status: "INCLUDED" | "EXTRA_COST" | "NOT_INCLUDED" | "TO_CONFIRM";
   notes?: string;
+  /** What the package lets us pick here, still to be decided. */
+  choice?: string;
 };
 
-const LISTED = "Listed on public wedding sites for this venue. Check it against your contract.";
-const ASK = "Not in the public listings. Ask the venue.";
+const MARKED_NO = "On the contract, marked No. Ask the price if you want to add it.";
+const NOT_LISTED = "Not on the contract. Ask the venue.";
 
 /**
- * What the venue package covers. Three kinds of line: facts from the signed contract (included or
- * extra), items public wedding listings describe (to confirm against the contract), and the usual
- * package items nobody has confirmed yet (to ask).
+ * The venue package, line by line from the signed contract (two pages, DocuSign 4/17–4/18/2026):
+ * everything circled Yes, every option marked No (so you can see what could be added), the choices
+ * the package leaves to you, and the usual items the contract doesn't mention (to ask).
  */
 export const VENUE_PACKAGE: PackageSeed[] = [
-  // From the contract
-  { key: "venue-pkg-event-125", section: "SPACE", name: "The wedding at the estate for 125 people", status: "INCLUDED", notes: "The 125 counts everyone eating, including the two of you and the wedding party. $200 for each person above 125, due April 1, 2028." },
-  { key: "venue-pkg-vendor-access", section: "STAFF", name: "Vendor and setup access from 6:00 AM", status: "INCLUDED" },
-  { key: "venue-pkg-maitre-d", section: "STAFF", name: "Maître d' service", status: "EXTRA_COST", notes: "A mandatory $3,350 service charge on the payment schedule, due April 1, 2028. It's not a tip." },
-  // Public listings
-  { key: "venue-pkg-hors-doeuvres", section: "COCKTAIL_HOUR", name: "Butler-passed hot and cold hors d'oeuvres", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-sommelier", section: "COCKTAIL_HOUR", name: "Sommelier station", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-cheese", section: "COCKTAIL_HOUR", name: "Cheese station", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-displays", section: "COCKTAIL_HOUR", name: "Displays of fruit, antipasto and salads", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-seafood-sushi", section: "COCKTAIL_HOUR", name: "Seafood and sushi stations", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-dinner", section: "DINNER", name: "Dinner from the venue's kitchen", status: "TO_CONFIRM", notes: "Catering is part of the venue's packages in public listings. The menu is chosen at the tasting." },
-  { key: "venue-pkg-bar", section: "BAR", name: "Full-service bar", status: "TO_CONFIRM", notes: `${LISTED} Ask how many hours, and which liquors are included.` },
-  { key: "venue-pkg-linens", section: "TABLES", name: "Colored table linens", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-suites", section: "SUITES", name: "Couple's suites with makeup stations, private restrooms, TV and sound system", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-suite-snacks", section: "SUITES", name: "Drinks and light snacks in the suites", status: "TO_CONFIRM", notes: LISTED },
-  { key: "venue-pkg-valet", section: "GUESTS", name: "Valet parking", status: "TO_CONFIRM", notes: LISTED },
-  // The usual package items, still to ask about
-  { key: "venue-pkg-ceremony-setup", section: "CEREMONY", name: "Ceremony chairs and setup", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-rain-space", section: "CEREMONY", name: "Indoor ceremony space if it rains", status: "TO_CONFIRM", notes: `${ASK} Ask how many people it holds.` },
-  { key: "venue-pkg-vendor-meals", section: "DINNER", name: "Vendor meals", status: "TO_CONFIRM", notes: `${ASK} Also ask whether they count toward the 125.` },
-  { key: "venue-pkg-cake", section: "DESSERT", name: "Wedding cake and cake cutting", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-dessert", section: "DESSERT", name: "Dessert or a Viennese table", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-champagne", section: "BAR", name: "Champagne toast", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-tableware", section: "TABLES", name: "Tables, chairs, china, glassware and flatware", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-centerpieces", section: "TABLES", name: "Centerpieces or table décor", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-paper", section: "TABLES", name: "Printed menus, table numbers and place cards", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-dance-floor", section: "SPACE", name: "Dance floor", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-lighting", section: "SPACE", name: "Lighting and uplighting", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-coordinator", section: "STAFF", name: "Banquet manager or day-of coordinator on site", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-late-night", section: "GUESTS", name: "Late-night snack", status: "TO_CONFIRM", notes: ASK },
-  { key: "venue-pkg-coat-check", section: "GUESTS", name: "Coat check", status: "TO_CONFIRM", notes: ASK },
+  // The space and the day
+  { key: "venue-pkg-event-125", section: "SPACE", name: "The wedding for up to 125 adults", status: "INCLUDED", notes: "The contract says 100–125 adults. The 125 counts everyone eating, including the two of you and the wedding party." },
+  { key: "venue-pkg-rooms", section: "SPACE", name: "Grand Ballroom, Pavilion, suites and Great Hall", status: "INCLUDED", notes: "The rooms circled on the contract; the Oak Room is crossed out. Ask which room holds the ceremony, the cocktail hour and the reception." },
+  { key: "venue-pkg-full-day", section: "SPACE", name: "The estate for the full day", status: "INCLUDED", notes: "The full-day estate fee is included, so no other event shares the day." },
+  { key: "venue-pkg-schedule", section: "SPACE", name: "Ceremony 6:00–6:30 PM, cocktail hour 6:30–7:30 PM, reception until midnight", status: "INCLUDED", notes: "Guests arrive at 5:30 PM." },
+  { key: "venue-pkg-vendor-access", section: "SPACE", name: "Vendor and setup access from 6:00 AM", status: "INCLUDED", notes: "Typed onto the contract. Every vendor must be packed up and gone within 90 minutes of the end, so by 1:30 AM." },
+  { key: "venue-pkg-dance-floor", section: "SPACE", name: "Dance floor", status: "TO_CONFIRM", notes: NOT_LISTED },
+  { key: "venue-pkg-lighting", section: "SPACE", name: "Lighting and uplighting", status: "TO_CONFIRM", notes: NOT_LISTED },
+
+  // Ceremony
+  { key: "venue-pkg-ceremony", section: "CEREMONY", name: "Ceremony at the estate", status: "INCLUDED", notes: "The ceremony fee is included." },
+  { key: "venue-pkg-ceremony-music", section: "CEREMONY", name: "Live piano and flute for the ceremony", status: "INCLUDED", notes: "Included, so the budget has no separate ceremony-music line. Put the songs on the Music page.", choice: "The songs: prelude, processional, jumping the broom and the recessional" },
+  { key: "venue-pkg-ceremony-setup", section: "CEREMONY", name: "Ceremony chairs and setup", status: "TO_CONFIRM", notes: NOT_LISTED },
+  { key: "venue-pkg-rain-space", section: "CEREMONY", name: "Indoor ceremony space if it rains", status: "TO_CONFIRM", notes: "Not on the contract. Ask which room, and how many people it holds." },
+  { key: "venue-pkg-coffee-before", section: "CEREMONY", name: "Coffee service before the ceremony", status: "NOT_INCLUDED", notes: "Left blank on the contract." },
+
+  // Cocktail hour, 6:30–7:30 PM
+  { key: "venue-pkg-cocktail-music", section: "COCKTAIL_HOUR", name: "Live piano and saxophone", status: "INCLUDED", choice: "Any songs you'd like them to play" },
+  { key: "venue-pkg-hors-doeuvres", section: "COCKTAIL_HOUR", name: "Butler-passed hors d'oeuvres", status: "INCLUDED", choice: "Which hors d'oeuvres" },
+  { key: "venue-pkg-cold-table", section: "COCKTAIL_HOUR", name: "Cold table presentations", status: "INCLUDED" },
+  { key: "venue-pkg-cheese", section: "COCKTAIL_HOUR", name: "Fromage and cheese display", status: "INCLUDED" },
+  { key: "venue-pkg-sommelier", section: "COCKTAIL_HOUR", name: "Sommelier and wine display", status: "INCLUDED" },
+  { key: "venue-pkg-charcuterie", section: "COCKTAIL_HOUR", name: "Italian charcuterie", status: "INCLUDED" },
+  { key: "venue-pkg-flatbread", section: "COCKTAIL_HOUR", name: "Artisanal flatbread station", status: "INCLUDED" },
+  { key: "venue-pkg-raw-bar", section: "COCKTAIL_HOUR", name: "Chilled seafood raw bar", status: "INCLUDED" },
+  { key: "venue-pkg-stations", section: "COCKTAIL_HOUR", name: "Three presentation stations", status: "INCLUDED", choice: "Which three stations" },
+  { key: "venue-pkg-chaffing", section: "COCKTAIL_HOUR", name: "A chafing-dish station: one theme, four items", status: "INCLUDED", notes: "The contract calls it a silver chafing station. Ask for gold chafers, since the wedding is gold only.", choice: "The theme and its four items" },
+  { key: "venue-pkg-ice", section: "COCKTAIL_HOUR", name: "Two ice sculptures", status: "INCLUDED", choice: "The two designs" },
+  { key: "venue-pkg-specialty-drinks", section: "COCKTAIL_HOUR", name: "Specialty drink bar", status: "INCLUDED", choice: "The specialty drinks" },
+  { key: "venue-pkg-sushi", section: "COCKTAIL_HOUR", name: "Sushi bar", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-caviar", section: "COCKTAIL_HOUR", name: "Chilled vodka and caviar", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-mozzarella", section: "COCKTAIL_HOUR", name: "Mozzarella station", status: "NOT_INCLUDED", notes: MARKED_NO },
+
+  // Dinner
+  { key: "venue-pkg-dinner", section: "DINNER", name: "A served dinner", status: "INCLUDED", notes: "Continental service is circled, not the buffet." },
+  { key: "venue-pkg-appetizer", section: "DINNER", name: "Appetizer course", status: "INCLUDED", choice: "The appetizer" },
+  { key: "venue-pkg-entrees", section: "DINNER", name: "Three entrées for guests to choose from: meat, chicken and fish", status: "INCLUDED", notes: "Each guest picks one. Their picks come from the RSVP app onto the Meals page.", choice: "One meat, one chicken and one fish" },
+  { key: "venue-pkg-sides", section: "DINNER", name: "A vegetable, and a potato or rice", status: "INCLUDED", choice: "One vegetable, and one potato or rice" },
+  { key: "venue-pkg-kids-meals", section: "DINNER", name: "Children's meals", status: "INCLUDED" },
+  { key: "venue-pkg-special-meals", section: "DINNER", name: "Vegetarian, vegan and special meals", status: "INCLUDED" },
+  { key: "venue-pkg-vendor-meals", section: "DINNER", name: "Vendor meals", status: "TO_CONFIRM", notes: "Not on the contract. Ask the price, and whether they count toward the 125." },
+  { key: "venue-pkg-kosher", section: "DINNER", name: "Kosher meals", status: "NOT_INCLUDED", notes: "Marked No. The wedding falls during Passover, so if any guests keep kosher for Passover, ask the venue what it can arrange." },
+  { key: "venue-pkg-intermezzo", section: "DINNER", name: "Intermezzo between courses", status: "NOT_INCLUDED", notes: "Left blank on the contract." },
+
+  // Cake and dessert
+  { key: "venue-pkg-cake", section: "DESSERT", name: "Four-tier wedding cake", status: "INCLUDED", notes: "Included, so the budget has no separate cake line.", choice: "Flavors, fillings and the design" },
+  { key: "venue-pkg-plated-dessert", section: "DESSERT", name: "Individual plated dessert", status: "INCLUDED", choice: "The dessert" },
+  { key: "venue-pkg-coffee", section: "DESSERT", name: "Coffee and tea", status: "INCLUDED" },
+  { key: "venue-pkg-espresso", section: "DESSERT", name: "Cappuccino and espresso", status: "INCLUDED" },
+  { key: "venue-pkg-cordial", section: "DESSERT", name: "Cordial cart", status: "INCLUDED" },
+  { key: "venue-pkg-send-off", section: "DESSERT", name: "Send-off station", status: "INCLUDED", notes: "A treat for guests on their way out.", choice: "What it serves" },
+  { key: "venue-pkg-dessert-platters", section: "DESSERT", name: "Dessert sampler platters", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-passed-desserts", section: "DESSERT", name: "Hand-passed desserts", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-sheet-cake", section: "DESSERT", name: "Sheet cake with an inscription", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-viennese", section: "DESSERT", name: "Viennese table", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-dessert-stations", section: "DESSERT", name: "Dessert stations", status: "NOT_INCLUDED", notes: MARKED_NO },
+  { key: "venue-pkg-cigars", section: "DESSERT", name: "Cigar roller", status: "NOT_INCLUDED", notes: MARKED_NO },
+
+  // Bar
+  { key: "venue-pkg-bar", section: "BAR", name: "Open bar, 6:30 PM to midnight", status: "INCLUDED", notes: "Premium liquor, and unlimited wine, beer and soda." },
+  { key: "venue-pkg-champagne-greeting", section: "BAR", name: "Champagne greeting as guests arrive", status: "INCLUDED", notes: "At 5:30 PM." },
+  { key: "venue-pkg-champagne", section: "BAR", name: "Champagne toast", status: "INCLUDED" },
+
+  // Tables
+  { key: "venue-pkg-linens", section: "TABLES", name: "Table linens", status: "INCLUDED", choice: "The linen colors" },
+  { key: "venue-pkg-tableware", section: "TABLES", name: "Tables, chairs, china, glassware and flatware", status: "TO_CONFIRM", notes: NOT_LISTED },
+  { key: "venue-pkg-centerpieces", section: "TABLES", name: "Centerpieces or table décor", status: "TO_CONFIRM", notes: "Not on the contract. Ask the venue; if not, they come from the florist (Floral & decor in the budget)." },
+  { key: "venue-pkg-paper", section: "TABLES", name: "Printed menus, table numbers and place cards", status: "TO_CONFIRM", notes: "Not on the contract. Ask the venue; if not, they come from the stationer." },
+
+  // Getting ready
+  { key: "venue-pkg-suites", section: "SUITES", name: "Getting-ready suites from 9 AM", status: "INCLUDED", notes: "The contract has you both arriving at 9 AM." },
+  { key: "venue-pkg-meals-day", section: "SUITES", name: "Breakfast and lunch on the day", status: "INCLUDED", notes: "Written in by hand next to the full-day estate fee.", choice: "What's served, and for how many" },
+
+  // Staff
+  { key: "venue-pkg-servers", section: "STAFF", name: "One server per table", status: "INCLUDED" },
+  { key: "venue-pkg-service-charge", section: "STAFF", name: "Taxable service charge", status: "INCLUDED", notes: "Written as included on the contract." },
+  { key: "venue-pkg-maitre-d", section: "STAFF", name: "Maître d' and staff fee", status: "EXTRA_COST", notes: "$3,350, due April 1, 2028, on the payment schedule. The contract's schedule writes it as a tip; it's mandatory, so it's counted as a service charge." },
+  { key: "venue-pkg-coordinator", section: "STAFF", name: "Banquet manager or day-of coordinator on site", status: "TO_CONFIRM", notes: "Not on the contract. Ask who runs the day for the venue." },
+  { key: "venue-pkg-security", section: "STAFF", name: "Estate security", status: "NOT_INCLUDED", notes: "Marked No." },
+
+  // For guests
+  { key: "venue-pkg-valet", section: "GUESTS", name: "Valet parking", status: "INCLUDED" },
+  { key: "venue-pkg-coat-check", section: "GUESTS", name: "Coat check", status: "TO_CONFIRM", notes: NOT_LISTED },
+  { key: "venue-pkg-late-night", section: "GUESTS", name: "Late-night snack", status: "TO_CONFIRM", notes: "Not on the contract. Ask the venue; the send-off station may cover it." },
+
+  // Pricing and terms
+  { key: "venue-pkg-price", section: "PRICING", name: "$47,500 before tax for up to 125 adults", status: "INCLUDED", notes: "With 6.625% NJ sales tax and the $3,350 maître d' fee, $54,000 in all, in four payments plus the fee." },
+  { key: "venue-pkg-overage", section: "PRICING", name: "$200 for each adult above 125", status: "EXTRA_COST", notes: "Due April 1, 2028 and worked out from the guest list. The contract adds NJ sales tax after its prices, so ask whether the 6.625% applies here too. If it does, set Tax on the overage in Settings." },
+  { key: "venue-pkg-children", section: "PRICING", name: "Children: $100 under 12, free under 3", status: "EXTRA_COST", notes: "Ask whether children count toward the 125. Until you know, the headcount prices every guest as an adult, so it errs high." },
+  { key: "venue-pkg-outside-vendors", section: "PRICING", name: "Outside vendor fee: $100", status: "EXTRA_COST", notes: "Written as +100 on the contract. Ask whether it's per vendor: with eight or so outside vendors that could be $800, and it isn't in the budget yet." },
+  { key: "venue-pkg-terms", section: "PRICING", name: "The contract's additional terms", status: "TO_CONFIRM", notes: "The contract says more terms follow on later pages, but the signed copy has two pages. Ask the venue for the full terms." },
 ];
 
 export const WEDDING_PARTY: Array<{
@@ -287,8 +358,8 @@ export function buildChecklist(): SeedTask[] {
     { key: "venue-vendor-meals", title: "Ask the venue whether vendor meals count toward the 125", dueDate: cd("2026-10-12"), area: "VENUE", priority: "HIGH", linkVenue: true, notes: "4–6 vendor meals. If they count, that's up to $1,200 of overage. Ask before payment 2 on 10/19." },
     { key: "wedding-inbox", title: "Set up a shared wedding email and a folder for every contract", dueDate: cd("2026-10-15"), area: "PLANNING", notes: "One place for contracts, receipts and vendor emails, so either of you can answer a vendor." },
     { key: "vision-brief", title: "Write our vision: the feel, colors, must-haves and what we don't want", dueDate: cd("2026-10-31"), area: "PLANNING", priority: "HIGH", notes: "One page to hand every designer, florist and photographer so their proposals start from the same picture." },
-    { key: "vendor-preview-prep", title: "Prepare for the venue's vendor preview (Nov 16, 6 PM)", dueDate: cd("2026-11-13"), area: "VENUE", linkVenue: true, notes: "Bring the open venue questions (on the venue's page), our budget per category, a short list of vendors to meet, and the printed interview guide (Questions to Ask) for each kind." },
-    { key: "interview-coordinators", title: "Interview designers and day-of coordinators", dueDate: cd("2026-11-16"), area: "VENDORS", priority: "HIGH", notes: "Meeting one at the vendor preview on Nov 16. Print the planner interview from Questions to Ask (Planner or coordinator) and bring it." },
+    { key: "vendor-preview-prep", title: "Prepare for the venue's vendor preview (Nov 16, 6 PM)", dueDate: cd("2026-11-13"), area: "VENUE", linkVenue: true, notes: "Bring the venue's open items (marked \"to confirm\" on its package list), our budget per category, and a short list of vendors to meet." },
+    { key: "interview-coordinators", title: "Interview designers and day-of coordinators", dueDate: cd("2026-11-16"), area: "VENDORS", priority: "HIGH", notes: "Meeting one at the vendor preview on Nov 16. Ask what's included, when they start, how many events they take that week, and their Thursday rate." },
 
     // 18–12 months
     { key: "guest-list-draft", title: "Draft the guest list (125 people total, including us and the wedding party)", dueDate: months(18), area: "GUESTS", priority: "HIGH", notes: "Every person above 125 costs $200. 145 people uses up the $4,000 contingency." },
@@ -309,8 +380,7 @@ export function buildChecklist(): SeedTask[] {
     { key: "book-officiant", title: "Book the officiant", dueDate: months(12), area: "CEREMONY", priority: "HIGH", notes: "April 13, 2028 is Holy Thursday. If your officiant is clergy, confirm they can officiate that day." },
     { key: "rsvp-app", title: "Set up the RSVP app and wedding website", dueDate: months(11), area: "GUESTS" },
     { key: "book-florist", title: "Book the florist", dueDate: months(11), area: "VENDORS" },
-    { key: "book-ceremony-music", title: "Book ceremony musicians", dueDate: months(11), area: "CEREMONY" },
-    { key: "kwe-kwe-decide", title: "Decide on a Guyanese kwe kwe: whether, when and where", dueDate: months(10), area: "RECEPTION", priority: "HIGH", notes: "Traditionally the night before the wedding, with call-and-response songs, drumming and dancing. That night is the rehearsal dinner (Wednesday, April 12), so the choices are: make the rehearsal dinner the kwe kwe, give it its own night earlier that week, or hold it during the reception. Passover seders are the evenings of April 10 and 11. Record what you decide in Decisions." },
+    { key: "kwe-kwe-decide", title: "Decide on a Guyanese kwe kwe: whether, when and where", dueDate: months(10), area: "RECEPTION", priority: "HIGH", isMilestone: true, notes: "Traditionally the night before the wedding, with call-and-response songs, drumming and dancing. That night is the rehearsal dinner (Wednesday, April 12), so the choices are: make the rehearsal dinner the kwe kwe, give it its own night earlier that week, or hold it during the reception. Passover seders are the evenings of April 10 and 11. Record what you decide in Decisions." },
     { key: "collect-addresses", title: "Collect every guest's mailing address", dueDate: months(11), area: "GUESTS" },
 
     // 10–6 months
@@ -321,16 +391,15 @@ export function buildChecklist(): SeedTask[] {
     { key: "bride-dress", title: "Order the wedding dress", dueDate: months(9), area: "ATTIRE", priority: "HIGH", isMilestone: true, notes: "9–12 months out." },
     { key: "book-beauty", title: "Book hair and makeup", dueDate: months(9), area: "BEAUTY" },
     { key: "welcome-event", title: "Decide on a welcome event or day-after brunch", dueDate: months(9), area: "RECEPTION", notes: "The day after is Good Friday, which may clash with services. Folding a welcome into the Wednesday rehearsal dinner avoids that." },
-    { key: "rentals", title: "Book rentals the venue doesn't include (linens, chairs, tableware, lounge)", dueDate: months(8), area: "RECEPTION" },
+    { key: "rentals", title: "Book any rentals the venue doesn't include (lounge furniture, extra décor)", dueDate: months(8), area: "RECEPTION", notes: "Linens come with the venue. Confirm the tables, chairs and tableware on the venue's package list first." },
     { key: "honeymoon", title: "Plan and book the honeymoon", dueDate: months(8), area: "TRAVEL", notes: "Check passports now. Many countries want 6 months of validity left after you travel." },
     { key: "florist-proposal", title: "Review the florist's design proposal", dueDate: months(7), area: "VENDORS" },
     { key: "kwe-kwe-leader", title: "If we're having a kwe kwe: find a kwe kwe leader and drummers", dueDate: months(7), area: "VENDORS", notes: "Ask family first; elders often know who leads the songs. Add them as a vendor once booked." },
-    { key: "cake-tasting", title: "Cake tasting", dueDate: months(7), area: "RECEPTION" },
     { key: "book-transport", title: "Book transportation", dueDate: months(6), area: "VENDORS" },
     { key: "groom-attire-shopping", title: "Groom's attire shopping", dueDate: months(7), area: "ATTIRE", isMilestone: true, notes: "Choose the look first, so the groom's side's suits and the bridesman's suit (with its Dusty Rose bow tie) can match it." },
     { key: "shuttles", title: "Book guest shuttles between the hotel and the venue", dueDate: months(5), area: "TRAVEL" },
     { key: "broom", title: "Choose or make the broom for jumping the broom", dueDate: months(5), area: "CEREMONY", notes: "Many couples decorate it with ribbon and flowers in the wedding colors (Dusty Rose, Desert Rose, gold; no silver) and keep it as a keepsake. Add it under Vision & Décor." },
-    { key: "cake", title: "Choose the cake and dessert", dueDate: months(6), area: "RECEPTION", notes: "Check first whether the venue package includes cake." },
+    { key: "cake", title: "Choose the four-tier cake and the plated dessert", dueDate: months(6), area: "RECEPTION", linkVenue: true, notes: "Both come with the venue. Pick the cake's flavors, fillings and design, and the dessert, and record them on the venue's package list." },
     { key: "sizing-reminder", title: "Remind the wedding party: dress selection and sizing due Nov 7", dueDate: addDays(DRESS_SIZING_DEADLINE, -30), area: "WEDDING_PARTY", priority: "HIGH" },
     { key: "sizing-deadline", title: "Dress selection and sizing due from every attendant", dueDate: DRESS_SIZING_DEADLINE, area: "WEDDING_PARTY", priority: "HIGH", isMilestone: true, owner: "WEDDING_PARTY" },
     { key: "approve-shoes", title: "Approve any shoes attendants already own (chocolate brown patent, 3.5\" or higher)", dueDate: DRESS_SIZING_DEADLINE, area: "WEDDING_PARTY" },
@@ -338,7 +407,7 @@ export function buildChecklist(): SeedTask[] {
     { key: "rehearsal-dinner", title: "Book the rehearsal dinner (Wednesday, April 12)", dueDate: months(5), area: "RECEPTION" },
 
     // 4–2 months
-    { key: "tasting", title: "Menu tasting with the venue", dueDate: months(4), area: "RECEPTION", isMilestone: true, linkVenue: true },
+    { key: "tasting", title: "Menu tasting with the venue", dueDate: months(4), area: "RECEPTION", isMilestone: true, linkVenue: true, notes: "Bring the open choices from the venue's package list: hors d'oeuvres, the three stations, the chafing station, the appetizer, the entrées, the sides and the dessert." },
     { key: "invitation-proofs", title: "Approve invitation proofs", dueDate: weeks(14), area: "STATIONERY" },
     { key: "design-walkthrough", title: "Design walkthrough at the venue with the designer and florist", dueDate: months(3), area: "VENUE", linkVenue: true },
     { key: "first-fitting", title: "First wedding dress fitting", dueDate: months(3), area: "ATTIRE" },
@@ -352,7 +421,7 @@ export function buildChecklist(): SeedTask[] {
     { key: "bands", title: "Buy wedding bands", dueDate: months(3), area: "ATTIRE" },
     { key: "invitations", title: "Mail invitations", dueDate: weeks(10), area: "STATIONERY", priority: "HIGH", isMilestone: true, notes: "8–10 weeks out." },
     { key: "rain-plan", title: "Rain plan: decide on a tent or the indoor backup", dueDate: months(2), area: "VENUE", priority: "HIGH", isMilestone: true, linkVenue: true, notes: "A tent for this many people usually costs far more than the $2,500 rentals line." },
-    { key: "passover-meals", title: "Check whether any guests need kosher-for-Passover meals", dueDate: months(2), area: "RECEPTION", notes: "Passover runs from the evening of April 10 through April 18, 2028." },
+    { key: "passover-meals", title: "Check whether any guests need kosher-for-Passover meals", dueDate: months(2), area: "RECEPTION", linkVenue: true, notes: "Passover runs from the evening of April 10 through April 18, 2028. Kosher meals aren't in the venue contract, so ask the venue what it can arrange." },
     { key: "bachelor-bachelorette", title: "Bachelor and bachelorette parties", dueDate: months(2), area: "WEDDING_PARTY", owner: "WEDDING_PARTY", isMilestone: true, notes: "Usually one to three months before, hosted by the best man and the maid and matron of honor. Keep them clear of Holy Week and Passover (April 9 to 18, 2028)." },
     { key: "ceremony-plan", title: "Plan the ceremony: vows, readings, order of service", dueDate: months(2), area: "CEREMONY" },
     { key: "timeline-draft", title: "Draft the wedding-day timeline", dueDate: weeks(8), area: "DAY_OF", priority: "HIGH", isMilestone: true },

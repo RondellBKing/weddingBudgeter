@@ -41,5 +41,7 @@ describe("seeded checklist", () => {
     for (const k of ["broom", "broom-people", "broom-cues", "kwe-kwe-decide", "kwe-kwe-leader", "kwe-kwe-plan"]) expect(keys.has(k), k).toBe(true);
     expect(DECISIONS.some((d) => d.key === "decision-jumping-the-broom")).toBe(true);
     expect(DECISIONS.some((d) => d.title.toLowerCase().includes("kwe kwe"))).toBe(false);
+    // Deciding on the kwe kwe is a milestone, so it shows on the planning timeline.
+    expect(tasks.find((t) => t.key === "kwe-kwe-decide")?.isMilestone).toBe(true);
   });
 });

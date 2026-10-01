@@ -22,7 +22,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "People",
     items: [
       { href: "/vendors", label: "Vendors", icon: "vendors" },
-      { href: "/vendors/questions", label: "Questions to Ask", icon: "questions" },
       { href: "/party", label: "Wedding Party", icon: "party" },
       { href: "/guests", label: "Guests", icon: "guests" },
       { href: "/seating", label: "Seating", icon: "seating" },
@@ -61,15 +60,7 @@ export const BOTTOM_NAV: NavItem[] = [
   { href: "/more", label: "More", icon: "more" },
 ];
 
-const NAV_HREFS = [...NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href)), SETTINGS_ITEM.href];
-
-function within(pathname: string, href: string): boolean {
+export function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
-}
-
-/** The nav item for this page. A more specific item wins: the guide lights "Questions to Ask", not "Vendors". */
-export function isActive(pathname: string, href: string): boolean {
-  if (!within(pathname, href)) return false;
-  return !NAV_HREFS.some((h) => h !== href && h.startsWith(href + "/") && within(pathname, h));
 }

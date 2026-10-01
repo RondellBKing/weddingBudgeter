@@ -45,14 +45,9 @@ export default async function VendorsPage({
         eyebrow="People"
         intro={`${bookedCount} of ${cover.length} categories booked. Everyone we hire, what we owe them, and what we still need to ask.`}
         actions={
-          <>
-            <Link href="/vendors/questions" className={buttonClass("secondary")}>
-              Questions to ask
-            </Link>
-            <Link href={addHref} className={buttonClass("primary")}>
-              Add vendor
-            </Link>
-          </>
+          <Link href={addHref} className={buttonClass("primary")}>
+            Add vendor
+          </Link>
         }
       />
 

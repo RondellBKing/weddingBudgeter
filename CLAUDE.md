@@ -10,7 +10,7 @@ tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV imp
 the decision log. What remains is the couple's own deploy (README → "Put it online").
 
 **Phase 8 (luxury planner) is built.** The couple asked for everything a full-service luxury
-planner would cover. The seeded checklist is planner-grade (109 tasks, 27 of them milestones).
+planner would cover. The seeded checklist is planner-grade (107 tasks, 28 of them milestones).
 Sections, one folder each:
 - Plan: `/planning` (the planning timeline, "The road to April 13": every milestone task and
   appointment from the signed contract on, in chapters counted back from the wedding, with tick
@@ -27,14 +27,14 @@ Sections, one folder each:
 - Hotel cutoffs and décor return-by dates are "deadline" items in the merged agenda (calendar,
   dashboard, .ics feed) via `src/lib/data/planner-deadlines.ts`. The dashboard has a wedding-day
   readiness card and counts thank-yous owed.
-- Every vendor page has a "What's included" list (`PackageItem`); the venue's is seeded from the
-  contract facts, public listings (marked "to confirm") and the usual items to ask about.
-- Questions to ask: `/vendors/questions` is the interview guide (a planner's questions for each
-  kind of vendor, written for this wedding, printable with room for answers; library in
-  `domain/vendor-questions.ts`). A new vendor starts with its guide questions (`VendorQuestion.topic`
-  holds the guide's heading; the couple's own questions have none), and the vendor page groups
-  questions by topic with an "Add all N" button for guide questions it's missing. The venue's
-  seeded questions come from the same library. `PLANNER` (planner or coordinator) is a category.
+- Every vendor page has a "What's included" list (`PackageItem`). The venue's is seeded line by
+  line from the signed contract (70 lines: what's circled Yes, the 13 options marked No, shown
+  collapsed, and the usual items the contract doesn't mention, "to confirm"). A line can carry a
+  `choice` (what the package lets them pick, e.g. the three entrées) and `chosen` (their pick);
+  open choices are listed at the top of the package card and counted on the dashboard.
+- Vendor questions are only the couple's own (typed on each vendor's page; the venue starts with
+  their 7). They asked for a built-in interview guide, then had it taken out (10/1/2026): don't
+  re-add one. `PLANNER` (planner or coordinator) is a vendor category.
 - Shared pieces: `printCss()` and `PrintButton` for printouts, `MoveButtons`/`RowLayout` for
   reorderable lists. Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
 
@@ -42,7 +42,6 @@ Known gaps, by choice:
 - The guest import doesn't link attendants to guest rows (`WeddingPartyMember.guestId`).
 - Re-running `npm run seed` recreates seeded rows the couple deleted; production only runs
   `seed --if-empty`.
-- The venue has no "also covers" set, so Catering shows as still needed until the couple ticks it.
 
 The user found long option lists overwhelming. Ask one question at a time, in plain language.
 
@@ -51,19 +50,30 @@ The user found long option lists overwhelming. Ask one question at a time, in pl
 - **Date:** Thursday, April 13, 2028. Rehearsal dinner Wednesday, April 12. America/New_York.
   It's Holy Thursday, during Passover (evening of 4/10 through 4/18), the day before Good
   Friday (a NJ state holiday), and Easter is 4/16. Never seed tasks that assume a Saturday.
-- **Venue:** The Estate at Florentine Gardens, River Vale, NJ. Contract signed by DocuSign
-  4/17–4/18/2026. Vendor/setup arrival from 6:00 AM.
+- **Venue:** The Estate at Florentine Gardens, 97 Rivervale Road, River Vale, NJ 07675
+  (201-666-0444, info@florentinegardens.com; Samantha Mayor signed for the Estate). Contract
+  signed by DocuSign 4/17–4/18/2026. Vendor/setup arrival from 6:00 AM; vendors out within 90
+  minutes of the end (1:30 AM). The couple arrive at 9 AM. Guests 5:30 PM (champagne greeting),
+  ceremony 6:00–6:30 PM, cocktail hour 6:30–7:30 PM, reception and open bar until midnight.
+- **What the contract includes** (so the budget never pays for it twice): live piano and flute at
+  the ceremony and piano and sax at cocktail hour, a served dinner (three entrées: meat, chicken,
+  fish), a four-tier cake and plated dessert, the open premium bar, linens, valet, breakfast and
+  lunch on the day, the full day at the estate. The venue "also covers" Catering, Cake and
+  Ceremony music. Not included: reception music (the DJ), flowers and décor, kosher meals,
+  security. Price: $47,500 before 6.625% tax for up to 125 adults; children $100 under 12, free
+  under 3; an outside-vendor fee of $100 (per vendor? unconfirmed, not budgeted).
 - **Headcount:** the venue includes **125 people**, and that 125 counts everyone eating,
   including the couple and the 14 attendants. **$200 per person above 125.**
-- **Budget:** $100,000 total. Categories add up to **$98,700**: bridesmaids' dresses are
-  handled outside this app (user's decision, 9/28/2026), so $1,300 is unassigned. Unassigned
-  money is not counted as headroom.
+- **Budget:** $100,000 total. Categories add up to **$97,100**: bridesmaids' dresses are
+  handled outside this app (user's decision, 9/28/2026), and Cake & dessert ($900) and Ceremony
+  music ($700) were removed because the venue contract includes them (10/1/2026), so $2,900 is
+  unassigned. Unassigned money is not counted as headroom.
 - **Contingency buffer:** $4,000, so break-even is 145 people (computed live, never hardcoded).
 - **Venue payments** (fixed total $54,000):
   1. 2026-04-19 $10,000 deposit, **paid 2026-04-18**
   2. 2026-10-19 $10,000
   3. 2027-10-19 $15,000
-  4. 2028-03-03 $15,650 (reaches contract minimum)
+  4. 2028-03-13 $15,650 (reaches contract minimum; the contract says 3/13/28)
   5. 2028-04-01 headcount overage, (headcount − 125) × $200, computed live until paid
   6. 2028-04-01 $3,350 maître d' fee, kind `SERVICE_CHARGE` (mandatory; never a tip)
 - **Wedding party (14):** groom's side: best man + 6 groomsmen (suits). Bride's side: maid of
@@ -77,7 +87,8 @@ The user found long option lists overwhelming. Ask one question at a time, in pl
   Gold metals only, no silver.
 - **Traditions:** jumping the broom is confirmed (end of the ceremony, before the recessional;
   its own music cue `BROOM_JUMP`). A Guyanese kwe kwe is possible, not decided: traditionally the
-  night before, which is the rehearsal dinner, so the checklist asks them to choose when.
+  night before, which is the rehearsal dinner, so the checklist asks them to choose when (a
+  milestone, so it's on the planning timeline).
 - Checklists use square tick boxes (`TickBox`), like a paper planner, never round radio-style marks.
 - Don't assume which partner is the bride or groom from their names. Use they/them.
 

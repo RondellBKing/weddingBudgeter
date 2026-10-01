@@ -9,7 +9,6 @@ import { prisma } from "@/lib/db";
 import { readVendorForm, vendorSchema, type VendorFormState } from "@/lib/domain/vendor-form";
 import { fieldErrors, zOptionalText, zText, type ActionState } from "@/lib/forms";
 import { nextPackageOrder } from "@/lib/domain/package";
-import { missingQuestions, standardQuestions } from "@/lib/domain/vendor-questions";
 import { INCLUSION_STATUS_LABEL, PACKAGE_SECTION_LABEL, PARTNER_LABEL, valuesOf } from "@/lib/labels";
 
 /** Today on the wedding's calendar (never the server's clock). */
@@ -55,9 +54,7 @@ export async function saveVendor(vendorId: string | null, _prev: VendorFormState
     const updated = await prisma.vendor.updateMany({ where: { id: vendorId }, data });
     if (updated.count === 0) return { ok: false, message: "This vendor no longer exists. It may have been deleted.", values };
   } else {
-    // A new vendor starts with the interview guide for its kind, ready to tick off on the first call.
-    const questions = standardQuestions(v.category).map((q, i) => ({ text: q.text, topic: q.topic, sortOrder: i }));
-    id = (await prisma.vendor.create({ data: { ...data, questions: { create: questions } }, select: { id: true } })).id;
+    id = (await prisma.vendor.create({ data, select: { id: true } })).id;
   }
   // Status and meals change the headcount (booked vendors' meals), so refresh every page.
   revalidatePath("/", "layout");
@@ -88,23 +85,6 @@ export async function addQuestion(vendorId: string, _prev: ActionState, form: Fo
   });
   revalidateVendor(vendorId);
   return { ok: true, message: "Question added." };
-}
-
-/** Add the guide's questions this vendor doesn't have yet (say, after changing its category). */
-export async function addStandardQuestions(vendorId: string): Promise<void> {
-  await requireSession();
-  const vendor = await prisma.vendor.findUnique({
-    where: { id: vendorId },
-    select: { category: true, questions: { select: { text: true, sortOrder: true } } },
-  });
-  if (!vendor) return;
-  const missing = missingQuestions(vendor.category, vendor.questions);
-  if (missing.length === 0) return;
-  const start = Math.max(-1, ...vendor.questions.map((q) => q.sortOrder)) + 1;
-  await prisma.vendorQuestion.createMany({
-    data: missing.map((q, i) => ({ vendorId, text: q.text, topic: q.topic, sortOrder: start + i })),
-  });
-  revalidateVendor(vendorId);
 }
 
 /**
@@ -155,6 +135,8 @@ const packageSchema = z.object({
   section: z.enum(valuesOf(PACKAGE_SECTION_LABEL), { error: "Pick where it belongs" }),
   status: z.enum(valuesOf(INCLUSION_STATUS_LABEL), { error: "Pick whether it's included" }),
   notes: zOptionalText(1000),
+  choice: zOptionalText(300),
+  chosen: zOptionalText(1000),
 });
 
 function readPackageForm(form: FormData) {
@@ -163,6 +145,8 @@ function readPackageForm(form: FormData) {
     section: form.get("section") ?? "",
     status: form.get("status") ?? "TO_CONFIRM",
     notes: form.get("notes") ?? "",
+    choice: form.get("choice") ?? "",
+    chosen: form.get("chosen") ?? "",
   });
 }
 

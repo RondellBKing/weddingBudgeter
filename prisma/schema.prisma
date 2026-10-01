@@ -241,8 +241,6 @@ model VendorQuestion {
   vendorId   String
   vendor     Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   text       String
-  /// The interview guide's heading ("Date and price"); null for the couple's own questions.
-  topic      String?
   answer     String?
   answeredOn DateTime? @db.Date
   sortOrder  Int       @default(0)
@@ -857,6 +855,10 @@ model PackageItem {
   name      String
   status    InclusionStatus @default(TO_CONFIRM)
   notes     String?
+  /// What the package lets us pick here ("One meat, one chicken and one fish"); null when nothing.
+  choice    String?
+  /// What we picked. A line with a choice is decided once this is filled in.
+  chosen    String?
   sortOrder Int             @default(0)
   isDemo    Boolean         @default(false)
   seedKey   String?         @unique
@@ -877,6 +879,7 @@ enum PackageSection {
   SUITES
   STAFF
   GUESTS
+  PRICING
   OTHER
 }
 

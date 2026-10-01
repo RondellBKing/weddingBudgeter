@@ -104,7 +104,7 @@ export async function loadDashboard() {
     prisma.songRequest.findMany({ select: { moment: true } }),
     prisma.shotListItem.count(),
     prisma.shotListItem.count({ where: { isMustHave: true } }),
-    prisma.packageItem.findMany({ where: { vendor: { category: "VENUE" } }, select: { status: true, vendorId: true } }),
+    prisma.packageItem.findMany({ where: { vendor: { category: "VENUE" } }, select: { status: true, vendorId: true, choice: true, chosen: true } }),
     prisma.task.findFirst({
       where: { isMilestone: true, status: { not: "DONE" }, dueDate: { gte: toDbDate(today) } },
       orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
@@ -212,7 +212,11 @@ export async function loadDashboard() {
     nextAppointment: appointments[0] ?? null,
     venuePackage:
       venuePackageLines.length > 0
-        ? { vendorId: venuePackageLines[0]!.vendorId, words: summaryWords(packageSummary(venuePackageLines)) }
+        ? {
+            vendorId: venuePackageLines[0]!.vendorId,
+            words: summaryWords(packageSummary(venuePackageLines)),
+            choicesOpen: venuePackageLines.filter((l) => l.choice !== null && l.chosen === null && l.status !== "NOT_INCLUDED").length,
+          }
         : null,
     weddingDay: {
       ceremonyTime: settings.ceremonyTime,

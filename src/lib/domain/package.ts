@@ -3,7 +3,18 @@ import { PACKAGE_SECTION_LABEL } from "../labels";
 
 // What a vendor's package covers, grouped the way a planner reads a contract. Pure functions.
 
-export type PackageLine = { id: string; section: PackageSection; name: string; status: InclusionStatus; notes: string | null; sortOrder: number };
+export type PackageLine = {
+  id: string;
+  section: PackageSection;
+  name: string;
+  status: InclusionStatus;
+  notes: string | null;
+  /** What the package lets us pick here; null when there's nothing to pick. */
+  choice: string | null;
+  /** What we picked. */
+  chosen: string | null;
+  sortOrder: number;
+};
 
 const SECTION_ORDER = Object.keys(PACKAGE_SECTION_LABEL) as PackageSection[];
 
@@ -33,6 +44,18 @@ export function summaryWords(s: PackageSummary): string {
     s.TO_CONFIRM ? `${s.TO_CONFIRM} to confirm` : null,
   ].filter(Boolean);
   return parts.length ? parts.join(" · ") : "Nothing listed yet";
+}
+
+/** Lines that leave us something to pick and haven't been picked yet, in contract order. Lines marked not included don't count. */
+export function openChoices<T extends PackageLine>(lines: T[]): T[] {
+  return groupPackage(lines)
+    .flatMap((g) => g.lines)
+    .filter((l) => l.choice !== null && l.chosen === null && l.status !== "NOT_INCLUDED");
+}
+
+/** Split for display: what's in (or still to confirm), and what the contract marks not included. */
+export function splitIncluded<T extends PackageLine>(lines: T[]): { inPackage: T[]; notIncluded: T[] } {
+  return { inPackage: lines.filter((l) => l.status !== "NOT_INCLUDED"), notIncluded: lines.filter((l) => l.status === "NOT_INCLUDED") };
 }
 
 /** The next position at the end of a section. */

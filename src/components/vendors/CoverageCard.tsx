@@ -64,10 +64,6 @@ export function CoverageCard({ rows }: { rows: CoverageRow[] }) {
                     <Link href={`/vendors/new?category=${c.category}`} className={linkClass}>
                       Add one
                     </Link>
-                    {" · "}
-                    <Link href={`/vendors/questions?category=${c.category}`} className={linkClass}>
-                      What to ask
-                    </Link>
                   </>
                 )}
               </p>
