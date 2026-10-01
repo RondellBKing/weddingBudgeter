@@ -5,7 +5,7 @@ import { addDays, addMonths, compareDates, type CalendarDate } from "../dates";
 
 export type JourneyEntry = {
   id: string;
-  kind: "milestone" | "appointment";
+  kind: "milestone" | "appointment" | "honeymoon";
   date: CalendarDate;
   title: string;
   notes: string | null;
@@ -48,7 +48,7 @@ export function chapterRanges(wedding: CalendarDate): Array<Omit<Chapter, "entri
     { key: "final", title: "The final month", span: "Confirm everything", from: m(1), until: addDays(wedding, -7) },
     { key: "week", title: "The week of", span: "Rehearsal and last details", from: addDays(wedding, -7), until: wedding },
     { key: "day", title: "The day", span: "Everything leads here", from: wedding, until: addDays(wedding, 1) },
-    { key: "after", title: "After", span: "Thank-yous and keepsakes", from: addDays(wedding, 1), until: null },
+    { key: "after", title: "After", span: "The honeymoon, thank-yous and keepsakes", from: addDays(wedding, 1), until: null },
   ];
 }
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { requireSession } from "../auth/require-session";
-import { formatInstant, fromDbDate, todayIn } from "../dates";
+import { daysBetween, formatDate, formatInstant, fromDbDate, todayIn } from "../dates";
 import { prisma } from "../db";
 import { planningChapters, journeyStats, type JourneyEntry } from "../domain/planning";
 import { EVENT_TYPE_LABEL, OWNER_LABEL, TASK_AREA_LABEL } from "../labels";
@@ -19,13 +19,15 @@ export async function loadPlanningTimeline() {
   const { settings, today } = plan;
   const tz = settings.timezone;
 
-  const [milestones, events] = await Promise.all([
+  const [milestones, events, trip] = await Promise.all([
     prisma.task.findMany({
       where: { isMilestone: true, dueDate: { not: null } },
       select: { id: true, title: true, notes: true, dueDate: true, status: true, owner: true, area: true, vendor: { select: { name: true } } },
     }),
     prisma.calendarEvent.findMany({ include: { vendor: { select: { name: true } } } }),
+    prisma.weddingSettings.findUnique({ where: { id: 1 }, select: { honeymoonDepartOn: true, honeymoonReturnOn: true } }),
   ]);
+  const chosen = trip?.honeymoonDepartOn ? await prisma.honeymoonIdea.findFirst({ where: { isChosen: true }, select: { name: true } }) : null;
 
   const entries: JourneyEntry[] = [
     ...milestones.map(
@@ -56,6 +58,22 @@ export async function loadPlanningTimeline() {
       }),
     ),
   ];
+
+  // The honeymoon, once its dates are set.
+  if (trip?.honeymoonDepartOn && trip.honeymoonReturnOn) {
+    const departOn = fromDbDate(trip.honeymoonDepartOn);
+    const returnOn = fromDbDate(trip.honeymoonReturnOn);
+    const nights = daysBetween(departOn, returnOn);
+    entries.push({
+      id: "honeymoon",
+      kind: "honeymoon",
+      date: departOn,
+      title: chosen ? `Leave for the honeymoon: ${chosen.name}` : "Leave for the honeymoon",
+      notes: `Home ${formatDate(returnOn, "weekday-long")}, ${nights} ${nights === 1 ? "night" : "nights"} away.`,
+      done: false,
+      href: "/honeymoon",
+    });
+  }
 
   return {
     plan,

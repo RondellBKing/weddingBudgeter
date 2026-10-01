@@ -55,6 +55,7 @@ export const TASK_AREA_LABEL: Record<TaskArea, string> = {
   RECEPTION: "Reception",
   BEAUTY: "Beauty",
   TRAVEL: "Travel",
+  HONEYMOON: "Honeymoon",
   LEGAL: "Legal",
   DAY_OF: "Day of",
   OTHER: "Other",

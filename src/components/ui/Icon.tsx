@@ -123,6 +123,7 @@ const PATHS = {
       <circle cx="14.5" cy="7.25" r="1" />
     </>
   ),
+  plane: <path d="M10.5 4.5a1.5 1.5 0 0 1 3 0V10l7 4v2l-7-2v4l2 1.5V21L12 20l-3.5 1v-1.5l2-1.5v-4l-7 2v-2l7-4z" />,
   travel: (
     <>
       <rect x="4.5" y="7.5" width="15" height="12" rx="1.5" />

@@ -48,6 +48,9 @@ model WeddingSettings {
   heroImageUrl                    String?
   /// What happens if it rains: where the ceremony moves, who decides, by when.
   rainPlan                        String?
+  /// The honeymoon: the day we leave and the day we're home. Null until we pick them.
+  honeymoonDepartOn               DateTime? @db.Date
+  honeymoonReturnOn               DateTime? @db.Date
   createdAt                       DateTime @default(now()) @db.Timestamptz(3)
   updatedAt                       DateTime @updatedAt @db.Timestamptz(3)
 }
@@ -332,6 +335,7 @@ enum TaskArea {
   RECEPTION
   BEAUTY
   TRAVEL
+  HONEYMOON
   LEGAL
   DAY_OF
   OTHER
@@ -888,4 +892,28 @@ enum InclusionStatus {
   EXTRA_COST
   NOT_INCLUDED
   TO_CONFIRM
+}
+
+/// A honeymoon destination on our shortlist. At most one is chosen (partial unique index).
+model HoneymoonIdea {
+  id          String   @id @default(cuid())
+  /// "St. Lucia"
+  name        String
+  /// "Eastern Caribbean"
+  place       String?
+  /// Rough flight time from New York, in hours; sorts the shortlist into short and long trips.
+  flightHours Int?
+  /// "About 4½ hours nonstop from JFK"
+  flight      String?
+  /// What mid-April is like there.
+  weather     String?
+  why         String?
+  watchOut    String?
+  isFavorite  Boolean  @default(false)
+  isChosen    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  seedKey     String?  @unique
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 }

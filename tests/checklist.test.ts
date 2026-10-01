@@ -30,7 +30,7 @@ describe("seeded checklist", () => {
 
   it("covers what a full-service planner covers", () => {
     const areas = new Set(tasks.map((t) => t.area));
-    for (const a of ["PLANNING", "BUDGET", "VENUE", "VENDORS", "ATTIRE", "WEDDING_PARTY", "GUESTS", "STATIONERY", "CEREMONY", "RECEPTION", "BEAUTY", "TRAVEL", "LEGAL", "DAY_OF"]) {
+    for (const a of ["PLANNING", "BUDGET", "VENUE", "VENDORS", "ATTIRE", "WEDDING_PARTY", "GUESTS", "STATIONERY", "CEREMONY", "RECEPTION", "BEAUTY", "TRAVEL", "HONEYMOON", "LEGAL", "DAY_OF"]) {
       expect(areas.has(a as never), a).toBe(true);
     }
     expect(tasks.length).toBeGreaterThan(90);

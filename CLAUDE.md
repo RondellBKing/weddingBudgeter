@@ -10,7 +10,7 @@ tasks and calendar (with the .ics feed), wedding party, guests (RSVP-app CSV imp
 the decision log. What remains is the couple's own deploy (README → "Put it online").
 
 **Phase 8 (luxury planner) is built.** The couple asked for everything a full-service luxury
-planner would cover. The seeded checklist is planner-grade (107 tasks, 28 of them milestones).
+planner would cover. The seeded checklist is planner-grade (113 tasks, 30 of them milestones).
 Sections, one folder each:
 - Plan: `/planning` (the planning timeline, "The road to April 13": every milestone task and
   appointment from the signed contract on, in chapters counted back from the wedding, with tick
@@ -32,9 +32,14 @@ Sections, one folder each:
   collapsed, and the usual items the contract doesn't mention, "to confirm"). A line can carry a
   `choice` (what the package lets them pick, e.g. the three entrées) and `chosen` (their pick);
   open choices are listed at the top of the package card and counted on the dashboard.
-- Vendor questions are only the couple's own (typed on each vendor's page; the venue starts with
-  their 7). They asked for a built-in interview guide, then had it taken out (10/1/2026): don't
+- Vendor questions are only the couple's own (typed on each vendor's page; none are seeded, and
+  the venue's open items are its "to confirm" package lines). They asked for a built-in interview guide, then had it taken out (10/1/2026): don't
   re-add one. `PLANNER` (planner or coordinator) is a vendor category.
+- After: `/honeymoon` (the trip dates on `WeddingSettings.honeymoonDepartOn/ReturnOn`, with a
+  suggested leave-two-days-after, eight-night trip; a mid-April destination shortlist,
+  `HoneymoonIdea`, split by flight time, with favorites and one chosen; the `HONEYMOON` task area
+  timed for Easter-week booking; rules in `domain/honeymoon.ts`). Once the dates are set, the
+  departure shows in the planning timeline's "After" chapter. The honeymoon isn't in the budget.
 - Shared pieces: `printCss()` and `PrintButton` for printouts, `MoveButtons`/`RowLayout` for
   reorderable lists. Each section's sample rows live in `prisma/seed/demo/<section>.ts`.
 

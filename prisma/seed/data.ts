@@ -325,11 +325,90 @@ export const PALETTE: Array<{ key: string; name: string; hex: string; usage: str
   { key: "palette-gold", name: "Gold", hex: "#B8912F", usage: "All metals. No silver." },
 ];
 
+// ─── The honeymoon shortlist ──────────────────────────────────────────────────
+
+/**
+ * Places that are at their best in mid-April, for leaving soon after a Thursday wedding in New
+ * Jersey: three a short flight away and three worth the long one. Flight times are rough, from
+ * the New York airports.
+ */
+export const HONEYMOON_IDEAS: Array<{
+  key: string;
+  name: string;
+  place: string;
+  flightHours: number;
+  flight: string;
+  weather: string;
+  why: string;
+  watchOut: string;
+}> = [
+  {
+    key: "honeymoon-st-lucia",
+    name: "St. Lucia",
+    place: "Eastern Caribbean",
+    flightHours: 5,
+    flight: "About 4½ hours nonstop from JFK.",
+    weather: "Dry season: sunny, mid-80s °F, warm sea.",
+    why: "The Pitons, rainforest and some of the Caribbean's most romantic resorts, many with private plunge pools.",
+    watchOut: "Easter week is high season. The west-coast resorts are an hour or more over winding roads from the main airport.",
+  },
+  {
+    key: "honeymoon-turks-caicos",
+    name: "Turks and Caicos",
+    place: "Caribbean",
+    flightHours: 4,
+    flight: "About 3½ hours nonstop from Newark or JFK.",
+    weather: "Dry and sunny, low-to-mid 80s °F.",
+    why: "Grace Bay's calm turquoise water and white sand: the easiest, most restful beach week.",
+    watchOut: "One of the priciest islands, and flat: more a beach trip than an adventure.",
+  },
+  {
+    key: "honeymoon-riviera-maya",
+    name: "Riviera Maya",
+    place: "Mexican Caribbean",
+    flightHours: 4,
+    flight: "About 4 hours nonstop to Cancún from Newark or JFK.",
+    weather: "Dry, hot and sunny, upper 80s °F.",
+    why: "Adults-only resorts, cenotes to swim in, Mayan ruins and Tulum's beaches, for less than most islands.",
+    watchOut: "Seaweed (sargassum) can wash up from spring into summer; ask resorts how they handle it. Easter week is busy.",
+  },
+  {
+    key: "honeymoon-maui",
+    name: "Maui",
+    place: "Hawaii",
+    flightHours: 11,
+    flight: "About 11–12 hours, nonstop in season or with one stop.",
+    weather: "Spring: dry on the sunny side of the island, low 80s °F.",
+    why: "Beaches, the road to Hana and sunrise on Haleakalā, and no passport needed.",
+    watchOut: "Six hours behind New York, and the longest flight you can take without leaving the country.",
+  },
+  {
+    key: "honeymoon-amalfi",
+    name: "Amalfi Coast",
+    place: "Southern Italy",
+    flightHours: 9,
+    flight: "About 8–9 hours to Rome or Naples, then a drive down the coast.",
+    weather: "Spring: mid-60s °F, flowers and lemons, too cool for most to swim.",
+    why: "Cliffside villages, long lunches, Capri and Positano before the summer crowds.",
+    watchOut: "Many hotels reopen for the season around Easter, so check yours is open. Italy travels on Easter Monday too.",
+  },
+  {
+    key: "honeymoon-maldives",
+    name: "The Maldives",
+    place: "Indian Ocean",
+    flightHours: 20,
+    flight: "About 20 hours with one connection (Dubai, Doha or Istanbul), then a seaplane or boat.",
+    weather: "End of the dry season: hot and sunny, with calm, clear water.",
+    why: "An overwater villa, the reef off your deck, and complete privacy.",
+    watchOut: "The longest trip after a big week, and the most expensive. Seaplanes only fly by day, so a late arrival can mean a night near the airport.",
+  },
+];
+
 // ─── Planning checklist, generated backwards from the wedding date ────────────
 
 type Area =
   | "PLANNING" | "BUDGET" | "VENUE" | "VENDORS" | "ATTIRE" | "WEDDING_PARTY" | "GUESTS"
-  | "STATIONERY" | "CEREMONY" | "RECEPTION" | "BEAUTY" | "TRAVEL" | "LEGAL" | "DAY_OF" | "OTHER";
+  | "STATIONERY" | "CEREMONY" | "RECEPTION" | "BEAUTY" | "TRAVEL" | "HONEYMOON" | "LEGAL" | "DAY_OF" | "OTHER";
 
 export type SeedTask = {
   key: string;
@@ -362,6 +441,8 @@ export function buildChecklist(): SeedTask[] {
     { key: "interview-coordinators", title: "Interview designers and day-of coordinators", dueDate: cd("2026-11-16"), area: "VENDORS", priority: "HIGH", notes: "Meeting one at the vendor preview on Nov 16. Ask what's included, when they start, how many events they take that week, and their Thursday rate." },
 
     // 18–12 months
+    { key: "honeymoon-choose", title: "Choose the honeymoon destination and dates", dueDate: months(15), area: "HONEYMOON", priority: "HIGH", isMilestone: true, notes: "Easter week is spring break, the busiest time to fly to the Caribbean and Mexico. Decide early so you can book the day flights open. The shortlist is on the Honeymoon page." },
+    { key: "honeymoon-passports", title: "Check both passports for the honeymoon", dueDate: months(14), area: "HONEYMOON", notes: "Each needs to stay valid for six months past the day you're home. Book tickets in the names on your passports today; if either of you changes names, update the passport after the trip." },
     { key: "guest-list-draft", title: "Draft the guest list (125 people total, including us and the wedding party)", dueDate: months(18), area: "GUESTS", priority: "HIGH", notes: "Every person above 125 costs $200. 145 people uses up the $4,000 contingency." },
     { key: "ask-wedding-party", title: "Propose to the wedding party", dueDate: months(18), area: "WEDDING_PARTY", priority: "HIGH", isMilestone: true, notes: "Ask each of the 14 to stand with you. Many couples give a small proposal box. Add their names on the Wedding Party page." },
     { key: "book-coordinator", title: "Book the designer / day-of coordinator", dueDate: months(16), area: "VENDORS", priority: "HIGH", isMilestone: true, notes: "Full designers start right away; many day-of coordinators take over 6–8 weeks before the wedding." },
@@ -392,7 +473,9 @@ export function buildChecklist(): SeedTask[] {
     { key: "book-beauty", title: "Book hair and makeup", dueDate: months(9), area: "BEAUTY" },
     { key: "welcome-event", title: "Decide on a welcome event or day-after brunch", dueDate: months(9), area: "RECEPTION", notes: "The day after is Good Friday, which may clash with services. Folding a welcome into the Wednesday rehearsal dinner avoids that." },
     { key: "rentals", title: "Book any rentals the venue doesn't include (lounge furniture, extra décor)", dueDate: months(8), area: "RECEPTION", notes: "Linens come with the venue. Confirm the tables, chairs and tableware on the venue's package list first." },
-    { key: "honeymoon", title: "Plan and book the honeymoon", dueDate: months(8), area: "TRAVEL", notes: "Check passports now. Many countries want 6 months of validity left after you travel." },
+    { key: "honeymoon", title: "Book the honeymoon resort", dueDate: months(12), area: "HONEYMOON", priority: "HIGH", isMilestone: true, notes: "Tell them it's your honeymoon: many resorts add a welcome or an upgrade." },
+    { key: "honeymoon-flights", title: "Book the honeymoon flights", dueDate: months(11), area: "HONEYMOON", priority: "HIGH", notes: "Airlines open seats about 11 months ahead, and Easter weekend fills fast." },
+    { key: "honeymoon-insurance", title: "Buy travel insurance for the honeymoon", dueDate: months(10), area: "HONEYMOON", notes: "Soon after booking, so it covers what you've already paid." },
     { key: "florist-proposal", title: "Review the florist's design proposal", dueDate: months(7), area: "VENDORS" },
     { key: "kwe-kwe-leader", title: "If we're having a kwe kwe: find a kwe kwe leader and drummers", dueDate: months(7), area: "VENDORS", notes: "Ask family first; elders often know who leads the songs. Add them as a vendor once booked." },
     { key: "book-transport", title: "Book transportation", dueDate: months(6), area: "VENDORS" },
@@ -451,6 +534,8 @@ export function buildChecklist(): SeedTask[] {
     { key: "vendor-arrivals", title: "Confirm every vendor's arrival time (venue opens at 6:00 AM)", dueDate: weeks(2), area: "DAY_OF" },
     { key: "seating-final", title: "Finish the seating chart", dueDate: days(10), area: "GUESTS", isMilestone: true },
     { key: "send-floor-plan", title: "Send the venue the floor plan and seating chart", dueDate: weeks(1), area: "VENUE", linkVenue: true },
+    { key: "honeymoon-extras", title: "Book honeymoon transfers, dinners and excursions", dueDate: weeks(8), area: "HONEYMOON" },
+    { key: "honeymoon-pack", title: "Pack for the honeymoon, set out-of-office replies and hold the mail", dueDate: weeks(1), area: "HONEYMOON" },
     { key: "welcome-bags", title: "Assemble the hotel welcome bags", dueDate: weeks(1), area: "TRAVEL", notes: "Drop them at the hotel with a list of names by Tuesday, April 11." },
     { key: "tips-envelopes", title: "Prepare final payments and tip envelopes", dueDate: weeks(1), area: "BUDGET", notes: "The maître d' fee is already a mandatory service charge. Don't tip venue staff twice." },
     { key: "weather-call", title: "Weather call: ceremony outside or inside", dueDate: weeks(1), area: "VENUE", priority: "HIGH", isMilestone: true, linkVenue: true },

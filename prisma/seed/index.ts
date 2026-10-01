@@ -16,6 +16,7 @@ import {
   buildChecklist,
   CATEGORIES,
   DECISIONS,
+  HONEYMOON_IDEAS,
   PALETTE,
   SETTINGS,
   VENUE,
@@ -165,6 +166,11 @@ async function main() {
             sortOrder: i,
           },
         });
+      }
+
+      for (const [i, h] of HONEYMOON_IDEAS.entries()) {
+        const { key, ...idea } = h;
+        await tx.honeymoonIdea.upsert({ where: { seedKey: key }, update: {}, create: { seedKey: key, ...idea, sortOrder: i } });
       }
 
       for (const [i, c] of PALETTE.entries()) {

@@ -47,6 +47,10 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/photos", label: "Photos", icon: "camera" },
     ],
   },
+  {
+    label: "After",
+    items: [{ href: "/honeymoon", label: "Honeymoon", icon: "plane" }],
+  },
 ];
 
 export const SETTINGS_ITEM: NavItem = { href: "/settings", label: "Settings", icon: "settings" };

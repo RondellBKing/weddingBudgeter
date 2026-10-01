@@ -160,6 +160,10 @@ function EntryRow({ entry, today, first, last }: { entry: JourneyEntry; today: C
         <span className="relative z-10 self-start bg-paper py-0.5">
           {entry.taskId ? (
             <TaskCheck id={entry.taskId} done={entry.done} title={entry.title} />
+          ) : entry.kind === "honeymoon" ? (
+            <span className="grid size-7 place-items-center text-rose-ink" title="Honeymoon">
+              <Icon name="plane" size={16} />
+            </span>
           ) : (
             <span className="grid size-7 place-items-center" title="Appointment">
               <span aria-hidden className="size-3 rounded-full border-2 border-garden bg-paper" />
@@ -179,6 +183,7 @@ function EntryRow({ entry, today, first, last }: { entry: JourneyEntry; today: C
           {entry.kind === "appointment" ? (
             <span className="text-[10px] font-semibold tracking-[0.14em] text-garden-ink uppercase">Appointment</span>
           ) : null}
+          {entry.kind === "honeymoon" ? <span className="text-[10px] font-semibold tracking-[0.14em] text-rose-ink uppercase">Honeymoon</span> : null}
           {entry.done ? <span className="text-[10px] font-semibold tracking-[0.14em] text-garden-ink uppercase">Done</span> : null}
           {late ? <span className="text-[10px] font-semibold tracking-[0.14em] text-brick uppercase">{relativeDays(days)}</span> : null}
           {soon ? <span className="text-[10px] font-semibold tracking-[0.14em] text-gold-ink uppercase">{relativeDays(days)}</span> : null}
